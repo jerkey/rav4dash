@@ -16,7 +16,7 @@ def writehex(hexbytes):
 
 s.write(bytearray.fromhex('00'))
 s.break_condition = True # https://forums.raspberrypi.com/viewtopic.php?t=239406
-sleep(0.04)
+sleep(0.035)
 s.break_condition = False
 s.write(bytearray.fromhex('00'))
 sleep(0.01)
