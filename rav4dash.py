@@ -9,6 +9,7 @@ init_EngineCS_mode = '8116f18109'
 init_EngineCS_mode_response = '83f116c1e98fc3'
 init_EngineCS_DTCquery = '8116f11398'
 
+# RTS will go True upon opening serial port, and False when program closes
 s = serial.Serial(port='/dev/ttyS4',baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=None, xonxoff=0, rtscts=0)
 
 def writehex(hexbytes):
@@ -66,7 +67,10 @@ print('thats '+readback[:whatwesent]+'and then whatwesent and then '+response)
 
 
 
-exit()
+#s.setRTS(True) # True is +5.15v, False is -5.15v
+sleep(2)
+
+exit() # RTS will go to False upon exit
 s.setRTS(False)
 sleep(1)
 s.setRTS(True)
