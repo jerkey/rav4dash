@@ -6,3 +6,5 @@ date > output.txt ; python3 -u rav4dash.py | tee -a output.txt
 
 or run 
 ./startlogging.sh
+
+see 20231231_093359.log for a rare glimpse at charge termination
