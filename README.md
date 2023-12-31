@@ -1,2 +1,8 @@
 # rav4dash
 upgrade a Generation 1 Toyota RAV4 Electric Vehicle to be a modern EV
+
+to redirect output with linux tee command, you must use python3 in unbuffered output mode:
+date > output.txt ; python3 -u rav4dash.py | tee -a output.txt
+
+or run 
+./startlogging.sh

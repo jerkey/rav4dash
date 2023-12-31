@@ -86,10 +86,13 @@ while(1):
     sendPacket(BCS,[0x21,0])
     parseReply(printout=False)
     sendPacket(BCS,[0x21,1])
-    volts = parseReply(printout=False)
+    v = parseReply(printout=False)
+    volts = (v[5]*256+v[6])/10
     sendPacket(BCS,[0x21,3])
-    amps = parseReply(printout=False)
-    print("Volts: "+str((volts[5]*256+volts[6])/10)+"	Amps: "+str(((amps[5]*256+amps[6])-65536)/10))
+    a = parseReply(printout=False)
+    amps = ((a[5]*256+a[6])-65536)/10
+    watts = volts * amps
+    print("Volts: "+str(volts)+"	Amps: "+str(amps)+"	Watts: "+str(int(watts)))
     sleep(1)
 
 #s.setRTS(False) # True is +5.15v, False is -5.15v
