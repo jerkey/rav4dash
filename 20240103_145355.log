@@ -1,7 +1,8 @@
-all: b'\x00\x00\x00'
-...BCS says: c1e98f
-...BCS says: 5200005ffffffe
-...BCS says: 5200015ffffffe
+Wed 03 Jan 2024 03:16:11 PM PST
+20240103_145355.log
+22:16 is 1336 seconds, 1167 lines, so 1.144816 seconds per line
+6802278 total watt readings, divided by 1.144816 = 5941808.989 watt seconds
+1.6505 kwh for 8.6 miles is 191.91 wh/mi
 .........Volts: 308.5	Amps: 0.9	Watts: 277
 ..........Volts: 308.5	Amps: 0.9	Watts: 277
 ..........Volts: 308.5	Amps: 0.9	Watts: 277
@@ -1170,4 +1171,3 @@ all: b'\x00\x00\x00'
 ..........Volts: 299.8	Amps: 0.7	Watts: 209
 ..........Volts: 299.9	Amps: 0.7	Watts: 209
 ......
-Wed 03 Jan 2024 03:16:11 PM PST
