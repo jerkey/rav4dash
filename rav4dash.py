@@ -96,8 +96,8 @@ print('initBCS() success at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 totalEnergy = 0.0 # watt seconds aka joules
 timeStarted = time.time()
 failedParseReplies = 0 # count how many failures to parse we've had
+loopTime = time.time()
 while(failedParseReplies < 5):
-    loopTime = time.time()
     sendPacket(BCS,[0x21,1]) # request voltage
     v = parseReply(printout=False)
     sendPacket(BCS,[0x21,3]) # request amperage
@@ -107,6 +107,7 @@ while(failedParseReplies < 5):
         amps = int.from_bytes(a[5:7], byteorder='big', signed=True)/10.0   # ((a[5]*256+a[6])-65535)/10
         watts = volts * amps
         totalEnergy += watts * ( time.time() - loopTime ) # add energy from each round
+        loopTime = time.time() # update timer
         print("Volts: "+str(volts)+"	Amps: "+str(amps)+"	Watts: "+str(int(watts))+"	Wh: "+str(int(totalEnergy/3600)))
     else:
         failedParseReplies += 1
