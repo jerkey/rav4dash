@@ -106,7 +106,8 @@ while(failedParseReplies < 5):
         volts = int.from_bytes(v[5:7], byteorder='big', signed=True)/10.0   # (v[5]*256+v[6])/10
         amps = int.from_bytes(a[5:7], byteorder='big', signed=True)/10.0   # ((a[5]*256+a[6])-65535)/10
         watts = volts * amps
-        totalEnergy += watts * ( time.time() - loopTime ) # add energy from each round
+        if volts != 499.5 and amps != 400:
+            totalEnergy += watts * ( time.time() - loopTime ) # add energy from each round
         loopTime = time.time() # update timer
         print("Volts: "+str(volts)+"	Amps: "+str(amps)+"	Watts: "+str(int(watts))+"	Wh: "+str(int(totalEnergy/3600)))
     else:
