@@ -9,6 +9,8 @@ s = serial.Serial(port='/dev/ttyS4',baudrate=9600, bytesize=8, parity='N', stopb
 BCS = 0xD5 # battery controller
 ECS = 0x16 # engine controller
 
+lastFreezeFrame = 0 # alternate between 0 and 1 ???
+
 def sendPacket(destination, data):
     toSend = [0x80 + len(data), destination, 0xF1] + data
     checksum = 0
@@ -90,6 +92,18 @@ def writehex(hexbytes):
         s.write(i)
         time.sleep(0.01)
 
+def getModuleVoltages():
+    global lastFreezeFrame
+    sendPacket(BCS,[0x12,2,lastFreezeFrame]) # request freeze frame 0
+    parseReply()#printout=False)
+    moduleVoltages = []
+    lastFreezeFrame ^= 1 # alternate lastFreezeFrame between 0 and 1
+    for i in [10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,    33,34]: # 0x20 is something else, 25.2 ?
+        sendPacket(BCS,[0x12, i, lastFreezeFrame]) # request module voltage from ff0
+        mv = parseReply(printout=False)
+        moduleVoltages.append(mv[6]/10.0)
+    return moduleVoltages
+
 print('rav4dash.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 initBCS()
 print('initBCS() success at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
@@ -110,6 +124,8 @@ while(failedParseReplies < 5):
             totalEnergy += watts * ( time.time() - loopTime ) # add energy from each round
         loopTime = time.time() # update timer
         print("Volts: "+str(volts)+"	Amps: "+str(amps)+"	Watts: "+str(int(watts))+"	Wh: "+str(int(totalEnergy/3600)))
+        gv = getModuleVoltages()
+        print(str(gv)+' '+str(sum(gv)))
     else:
         failedParseReplies += 1
         print("timed out querying for volts or amps, failedParseReplies = "+str(failedParseReplies))
