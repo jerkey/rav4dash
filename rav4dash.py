@@ -2,6 +2,7 @@
 
 import serial
 import time
+import os
 
 # RTS will go True upon opening serial port, and False when program closes
 s = serial.Serial(port='/dev/ttyS4',baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=2000, xonxoff=0, rtscts=0)
@@ -110,6 +111,7 @@ print('initBCS() success at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 totalEnergy = 0.0 # watt seconds aka joules
 timeStarted = time.time()
 failedParseReplies = 0 # count how many failures to parse we've had
+webUpdateTime = 0 # we'll use this to remember when we last sent a web update
 loopTime = time.time()
 while(failedParseReplies < 5):
     sendPacket(BCS,[0x21,1]) # request voltage
@@ -123,9 +125,13 @@ while(failedParseReplies < 5):
         if volts != 499.5 and amps != 400:
             totalEnergy += watts * ( time.time() - loopTime ) # add energy from each round
         loopTime = time.time() # update timer
-        print("Volts: "+str(volts)+"	Amps: "+str(amps)+"	Watts: "+str(int(watts))+"	Wh: "+str(int(totalEnergy/3600)))
         gv = getModuleVoltages()
         print(str(gv)+' '+str(sum(gv)))
+        printString = "Volts: "+str(volts)+"	Amps: "+str(amps)+"	Watts: "+str(int(watts))+"	Wh: "+str(int(totalEnergy/3600))
+        print(printString)
+        if (time.time() - webUpdateTime) > 60: # timeout in seconds
+            os.system('curl -G https://website.org/cgi-bin/darbo --data-urlencode "' + printString + '"' )
+            webUpdateTime = time.time() # reset timer
     else:
         failedParseReplies += 1
         print("timed out querying for volts or amps, failedParseReplies = "+str(failedParseReplies))
