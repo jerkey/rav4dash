@@ -108,6 +108,11 @@ def getModuleVoltages():
         moduleVoltages.append(mv[6]/10.0)
     return moduleVoltages
 
+def requestSignedInt(target, requestBytes):
+    sendPacket(target,requestBytes)
+    reply = parseReply(printout=False)
+    return int.from_bytes(reply[5:7], byteorder='big', signed=True)
+
 print('rav4dash.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 initBCS()
 print('initBCS() success at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
@@ -119,21 +124,20 @@ loopTime = time.time()
 #sendPacket(BCS,[0x13]) # request DTCs
 #dtc = parseReply()
 while(failedParseReplies < 5):
-    sendPacket(BCS,[0x21,1]) # request voltage
-    v = parseReply(printout=False)
-    sendPacket(BCS,[0x21,3]) # request amperage
-    a = parseReply(printout=False)
-    sendPacket(BCS,[0x21,4]) # request state of charge
-    s = parseReply(printout=False)
+    v = requestSignedInt(BCS,[0x21,1]) # request voltage
+    a = requestSignedInt(BCS,[0x21,3]) # request amperage
+    s = requestSignedInt(BCS,[0x21,4]) # request state of charge
+    t = requestSignedInt(BCS,[0x21,6]) # request battery pack temperature
     if v and a:
-        volts = int.from_bytes(v[5:7], byteorder='big', signed=True)/10.0   # (v[5]*256+v[6])/10
-        amps = int.from_bytes(a[5:7], byteorder='big', signed=True)/10.0   # ((a[5]*256+a[6])-65535)/10
-        soc = int.from_bytes(s[5:7], byteorder='big', signed=True)/10.0   #
+        volts = v/10.0
+        amps = a/10.0
+        soc = s/10.0
+        tp = t/100.0
         watts = volts * amps
         if volts != 499.5 and amps != 400:
             totalEnergy += watts * ( time.time() - loopTime ) # add energy from each round
         loopTime = time.time() # update timer
-        printString = "Volts: "+str(volts)+"	Amps: "+str(amps)+"	Watts: "+str(int(watts))+"	Wh: "+str(int(totalEnergy/3600)) + "	SOC: " + str(soc)
+        printString = "V:"+str(volts)+"	A:"+str(amps)+"	W:"+str(int(watts))+"	Wh:"+str(int(totalEnergy/3600))+"	SOC: "+str(soc)+"	T:"+str(tp)
         print(printString)
         if (time.time() - webUpdateTime) > 60: # timeout in seconds
             os.system('curl -G https://website.org/cgi-bin/darbo --data-urlencode "' + printString + '"' )
