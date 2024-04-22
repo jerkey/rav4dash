@@ -37,14 +37,17 @@ def parseReply(printout=True):
         print("first byte returned was "+hex(a[0])+" expected 0x81-0x87")
         return False
     if a[0] & 15 != len(a) - 4:
-        print("expected "+str((a[0] & 15) + 4)+" bytes but got "+str(len(a)))
-        return False
+        print("strange, expected "+str((a[0] & 15) + 4)+" bytes but got "+str(len(a))+", reading for a while and printing all:",end='')
+        time.sleep(1)
+        a += s.read_all()
+        print(a.hex())
+        return a
     checksum = 0
     for i in a[0:(3 + a[0] & 15)]:
         checksum += i;
     checksum %= 256
-    if checksum != a[len(a)-1]:
-        print("checksum is wrong, was "+str(a[len(a)-1])+" but expected "+str(checksum))
+    if checksum != a[(a[0] & 15) + 3]:
+        print("checksum is wrong, was "+str(a[(a[0] & 15) + 3])+" but expected "+str(checksum))
         return False
     if printout:
         if a[2] == ECS:
@@ -113,6 +116,8 @@ timeStarted = time.time()
 failedParseReplies = 0 # count how many failures to parse we've had
 webUpdateTime = 0 # we'll use this to remember when we last sent a web update
 loopTime = time.time()
+#sendPacket(BCS,[0x13]) # request DTCs
+#dtc = parseReply()
 while(failedParseReplies < 5):
     sendPacket(BCS,[0x21,1]) # request voltage
     v = parseReply(printout=False)
@@ -125,13 +130,13 @@ while(failedParseReplies < 5):
         if volts != 499.5 and amps != 400:
             totalEnergy += watts * ( time.time() - loopTime ) # add energy from each round
         loopTime = time.time() # update timer
-        gv = getModuleVoltages()
-        print(str(gv)+' '+str(sum(gv)))
         printString = "Volts: "+str(volts)+"	Amps: "+str(amps)+"	Watts: "+str(int(watts))+"	Wh: "+str(int(totalEnergy/3600))
         print(printString)
         if (time.time() - webUpdateTime) > 60: # timeout in seconds
             os.system('curl -G https://website.org/cgi-bin/darbo --data-urlencode "' + printString + '"' )
             webUpdateTime = time.time() # reset timer
+        #gv = getModuleVoltages()
+        #print(str(gv)+' '+str(sum(gv)))
     else:
         failedParseReplies += 1
         print("timed out querying for volts or amps, failedParseReplies = "+str(failedParseReplies))
