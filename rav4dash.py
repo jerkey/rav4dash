@@ -123,10 +123,15 @@ webUpdateTime = 0 # we'll use this to remember when we last sent a web update
 loopTime = time.time()
 #sendPacket(BCS,[0x13]) # request DTCs
 #dtc = parseReply()
+chargeStopped = False  # did we brusastop yet?
 while(failedParseReplies < 5):
     v = requestSignedInt(BCS,[0x21,1]) # request voltage
     a = requestSignedInt(BCS,[0x21,3]) # request amperage
     s = requestSignedInt(BCS,[0x21,4]) # request state of charge
+    if (s > 990) and (chargeStopped == False):
+        os.system("brusastop")
+        os.system('curl -sG https://securepollingsystem.org/cgi-bin/darbo --data-urlencode "charge is complete, stopping charger"' )
+        chargeStopped = True
     t = requestSignedInt(BCS,[0x21,6]) # request battery pack temperature
     if v and a:
         volts = v/10.0
