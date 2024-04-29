@@ -111,7 +111,10 @@ def getModuleVoltages():
 def requestSignedInt(target, requestBytes):
     sendPacket(target,requestBytes)
     reply = parseReply(printout=False)
-    return int.from_bytes(reply[5:7], byteorder='big', signed=True)
+    if reply:
+        return int.from_bytes(reply[5:7], byteorder='big', signed=True)
+    else:
+        return False
 
 print('rav4dash.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 initBCS()
@@ -133,7 +136,8 @@ while(failedParseReplies < 5):
         os.system('curl -sG https://securepollingsystem.org/cgi-bin/darbo --data-urlencode "charge is complete, stopping charger"' )
         chargeStopped = True
     t = requestSignedInt(BCS,[0x21,6]) # request battery pack temperature
-    if v and a:
+    if v and a and s and t:
+        failedParseReplies = 0; # reset fail counter
         volts = v/10.0
         amps = a/10.0
         soc = s/10.0
@@ -145,7 +149,7 @@ while(failedParseReplies < 5):
         printString = "V:"+str(volts)+"	A:"+str(amps)+"	W:"+str(int(watts))+"	Wh:"+str(int(totalEnergy/3600))+"	SOC: "+str(soc)+"	T:"+str(tp)
         print(printString)
         if (time.time() - webUpdateTime) > 60: # timeout in seconds
-            os.system('curl -G https://website.org/cgi-bin/darbo --data-urlencode "' + printString + '"' )
+            os.system('curl -sG https://website.org/cgi-bin/darbo --data-urlencode "' + printString + '"' )
             webUpdateTime = time.time() # reset timer
         #gv = getModuleVoltages()
         #print(str(gv)+' '+str(sum(gv)))

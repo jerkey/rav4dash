@@ -1,2 +1,4 @@
 LOGFILE=$(date +"%Y%m%d_%H%M%S").log
-python3 -u rav4dash.py | tee $LOGFILE
+while true; do
+  python3 -u rav4dash.py | tee -a $LOGFILE
+done
