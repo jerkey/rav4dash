@@ -133,8 +133,10 @@ while(failedParseReplies < 5):
     s = requestSignedInt(BCS,[0x21,4]) # request state of charge
     if (s > 990) and (chargeStopped == False):
         os.system("brusastop")
-        os.system('curl -sG https://securepollingsystem.org/cgi-bin/darbo --data-urlencode "charge is complete, stopping charger"' )
+        os.system('curl -sGm5 https://website.org/cgi-bin/darbo --data-urlencode "charge is complete, stopping charger"' )
         chargeStopped = True
+        time.sleep(5)
+        os.system("ignition_off.sh") # turn off vehicle
     t = requestSignedInt(BCS,[0x21,6]) # request battery pack temperature
     if v and a and s and t:
         failedParseReplies = 0; # reset fail counter
@@ -148,8 +150,8 @@ while(failedParseReplies < 5):
         loopTime = time.time() # update timer
         printString = "V:"+str(volts)+"	A:"+str(amps)+"	W:"+str(int(watts))+"	Wh:"+str(int(totalEnergy/3600))+"	SOC: "+str(soc)+"	T:"+str(tp)
         print(printString)
-        if (time.time() - webUpdateTime) > 60: # timeout in seconds
-            os.system('curl -sG https://website.org/cgi-bin/darbo --data-urlencode "' + printString + '"' )
+        if (time.time() - webUpdateTime) > 60: # time in seconds between web updates
+            os.system('curl -sGm3 https://website.org/cgi-bin/darbo --data-urlencode "' + printString + '"' ) # m3 = timeout after 3 seconds
             webUpdateTime = time.time() # reset timer
         #gv = getModuleVoltages()
         #print(str(gv)+' '+str(sum(gv)))
