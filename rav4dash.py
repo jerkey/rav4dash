@@ -116,9 +116,24 @@ def requestSignedInt(target, requestBytes):
     else:
         return False
 
+IPADDRESS=''
+WIFINETWORK=''
+def getIPandWifi():
+    global IPADDRESS, WIFINETWORK
+    try:
+        IPADDRESS = os.popen('timeout 4 ip -br -4 a | grep wlan0').read().split(' ')[-2].split('/')[0]
+    except:
+        IPADDRESS = 'NO_IP_ADDRESS'
+    try:
+        WIFINETWORK = os.popen('iwconfig 2>&1 | grep wlan0').read().split('"')[-2]
+    except:
+        WIFINETWORK = 'NO_WIFI_NETWORK'
+
 print('rav4dash.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
+getIPandWifi()
 initBCS()
 print('initBCS() success at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
+print('IP address is '+IPADDRESS+' on wifi network '+WIFINETWORK)
 totalEnergy = 0.0 # watt seconds aka joules
 timeStarted = time.time()
 failedParseReplies = 0 # count how many failures to parse we've had
@@ -151,7 +166,8 @@ while(failedParseReplies < 5):
         printString = "V:"+str(volts)+"	A:"+str(amps)+"	W:"+str(int(watts))+"	Wh:"+str(int(totalEnergy/3600))+"	SOC: "+str(soc)+"	T:"+str(tp)
         print(printString)
         if (time.time() - webUpdateTime) > 60: # time in seconds between web updates
-            os.system('timeout 3 curl -sG https://website.org/cgi-bin/darbo --data-urlencode "' + printString + '"' ) # timeout after 3 seconds
+            getIPandWifi()
+            os.system('timeout 3 curl -sG https://website.org/cgi-bin/darbo --data-urlencode "' + printString + '	' + IPADDRESS + '	' + WIFINETWORK + '"' ) # timeout after 3 seconds
             webUpdateTime = time.time() # reset timer
         #gv = getModuleVoltages()
         #print(str(gv)+' '+str(sum(gv)))
