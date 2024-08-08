@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+  <title>Darbo UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.5" />
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script>
+    $(document).ready(function() {
+
+      function timingLoad() {
+        $('#status').load('/status');
+      }
+      timingLoad();
+      setInterval(timingLoad, 3000);
+
+      $('#ignition_on').on('click', function() {
+        $.get('/ignition_on');
+      });
+
+      $('#test_brusa').on('click', function() {
+        $.get('/test_brusa');
+      });
+
+      $('#ignition_off').on('click', function() {
+        $.get('/ignition_off');
+      });
+
+    });
+  </script>
+</head>
+<body>
+  <div id="status"></div><br />
+  <button id="ignition_on">ignition on</button><br />
+  <button id="test_brusa">test brusa</button><br />
+  <button id="ignition_off">ignition off</button>
+  </body>
+</html>

@@ -27,7 +27,7 @@ def parseReply(printout=True):
     a = serialPort.read_all()
     startParseTime = time.time()
     while len(a) == 0 and (time.time() - startParseTime) < 5: # timeout in seconds
-        print('.',end='')
+        #print('.',end='')
         time.sleep(0.1)
         a = serialPort.read_all()
     if len(a) == 0:
@@ -81,7 +81,7 @@ def initBCS():
         serialPort.break_condition = False
         serialPort.write(bytearray.fromhex('00'))
         time.sleep(0.01)
-        print("all: "+str(serialPort.read_all())) # throw away whatever is in the buffer
+        serialPort.read_all() # print("all: "+str(serialPort.read_all())) # throw away whatever is in the buffer
         sendPacket(BCS,[0x81])
         initBCSStatus = parseReply()
     sendPacket(BCS,[0x12,0,0])
@@ -148,7 +148,7 @@ while(failedParseReplies < 5):
     s = requestSignedInt(BCS,[0x21,4]) # request state of charge
     if (s > 990) and (chargeStopped == False):
         os.system("brusastop")
-        os.system('timeout 5 curl -sG https://website.org/cgi-bin/darbo --data-urlencode "charge is complete, stopping charger"' )
+        os.system('timeout 5 curl -sG https://securepollingsystem.org/cgi-bin/darbo --data-urlencode "charge is complete, stopping charger"' )
         chargeStopped = True
         time.sleep(5)
         os.system("ignition_off.sh") # turn off vehicle
@@ -163,11 +163,11 @@ while(failedParseReplies < 5):
         if volts != 499.5 and amps != 400:
             totalEnergy += watts * ( time.time() - loopTime ) # add energy from each round
         loopTime = time.time() # update timer
-        printString = "V:"+str(volts)+"	A:"+str(amps)+"	W:"+str(int(watts))+"	Wh:"+str(int(totalEnergy/3600))+"	SOC: "+str(soc)+"	T:"+str(tp)
+        printString = "V:"+str(volts)+"	A:"+str(amps)+"	W:"+str(int(watts))+"	Wh:"+str(int(totalEnergy/3600))+"	SOC:"+str(soc)+"	T:"+str(tp)
         print(printString)
         if (time.time() - webUpdateTime) > 60: # time in seconds between web updates
             getIPandWifi()
-            os.system('timeout 3 curl -sG https://website.org/cgi-bin/darbo --data-urlencode "' + printString + '	' + IPADDRESS + '	' + WIFINETWORK + '"' ) # timeout after 3 seconds
+            os.system('timeout 3 curl -sG https://securepollingsystem.org/cgi-bin/darbo --data-urlencode "' + printString + '	' + IPADDRESS + '	' + WIFINETWORK + '"' ) # timeout after 3 seconds
             webUpdateTime = time.time() # reset timer
         #gv = getModuleVoltages()
         #print(str(gv)+' '+str(sum(gv)))

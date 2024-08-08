@@ -1,4 +1,8 @@
 LOGFILE=$(date +"%Y%m%d_%H%M%S").log
-while true; do
+#ignition_on.sh
+EXITCODE=0
+while [ ${EXITCODE}sdfsdf == "0sdfsdf" ] ; do
   python3 -u rav4dash.py | tee -a $LOGFILE
+  EXITCODE=$?
+  echo EXITCODE=$EXITCODE
 done
