@@ -32,7 +32,7 @@ def test_brusa():
   time.sleep(0.5)
   subprocess.run(['echo', '-ne', 'profile\r\n'], stdout=tty)
   time.sleep(5)
-  subprocess.run(['echo', '-ne', '\x02\x41\xf0\x01\x09\x04\x01\x41\x03'], stdout=tty)
+  subprocess.run(['echo', '-ne', r'\x02\x41\xf0\x01\x09\x04\x01\x41\x03'], stdout=tty)
   return ('', 204)
 
 @app.route('/ignition_off')
