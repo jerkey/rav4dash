@@ -128,7 +128,7 @@ def getIPandWifi():
         WIFINETWORK = os.popen('iwconfig 2>&1 | grep wlan0').read().split('"')[-2]
     except:
         WIFINETWORK = 'NO_WIFI_NETWORK'
-
+statusfile = open('statusfile.txt','w') # we overwrite this with the latest
 print('rav4dash.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 getIPandWifi()
 initBCS()
@@ -165,6 +165,10 @@ while(failedParseReplies < 5):
         loopTime = time.time() # update timer
         printString = "V:"+str(volts)+"	A:"+str(amps)+"	W:"+str(int(watts))+"	Wh:"+str(int(totalEnergy/3600))+"	SOC:"+str(soc)+"	T:"+str(tp)
         print(printString)
+        statusfile.seek(0)
+        statusfile.write(printString)
+        statusfile.truncate()
+        statusfile.flush()
         if (time.time() - webUpdateTime) > 60: # time in seconds between web updates
             getIPandWifi()
             os.system('timeout 3 curl -sG https://securepollingsystem.org/cgi-bin/darbo --data-urlencode "' + printString + '	' + IPADDRESS + '	' + WIFINETWORK + '"' ) # timeout after 3 seconds

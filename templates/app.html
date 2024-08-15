@@ -11,7 +11,7 @@
         $('#status').load('/status');
       }
       timingLoad();
-      setInterval(timingLoad, 3000);
+      setInterval(timingLoad, 1000);
 
       $('#ignition_on').on('click', function() {
         $.get('/ignition_on');

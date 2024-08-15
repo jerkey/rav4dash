@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 from flask import Flask, render_template
-from glob import glob
 import os
 import subprocess
 import time
@@ -47,9 +46,7 @@ def status_fields():
   return {part[0]: part[1] for part in parts}
 
 def last_status():
-  logs = glob('????????_??????.log')
-  logs.sort()
-  last_log = logs[-1]
+  last_log = 'statusfile.txt'
   with open(last_log) as f:
     lines = f.readlines()
     statuses = [x for x in lines if x.startswith('V:')]
