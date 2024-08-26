@@ -4,8 +4,12 @@ import serial
 import time
 import os
 
+config=open('rav4dash.conf','r').read().splitlines()
+SERIAL=config[0] # first line of rav4dash.conf should be like /dev/ttyS4
+CGIURL=config[1] # second line of rav4dash.conf should be like https://website.com/cgi-bin/logcar.sh
+
 # RTS will go True upon opening serial port, and False when program closes
-serialPort = serial.Serial(port='/dev/ttyS4',baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=2000, xonxoff=0, rtscts=0)
+serialPort = serial.Serial(port=SERIAL,baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=2000, xonxoff=0, rtscts=0)
 
 BCS = 0xD5 # battery controller
 ECS = 0x16 # engine controller
@@ -121,11 +125,11 @@ WIFINETWORK=''
 def getIPandWifi():
     global IPADDRESS, WIFINETWORK
     try:
-        IPADDRESS = os.popen('timeout 4 ip -br -4 a | grep wlan0').read().split(' ')[-2].split('/')[0]
+        IPADDRESS = os.popen('timeout 4 ip -br -4 a | grep -m1 \'^w\'').read().split(' ')[-2].split('/')[0]
     except:
         IPADDRESS = 'NO_IP_ADDRESS'
     try:
-        WIFINETWORK = os.popen('iwconfig 2>&1 | grep wlan0').read().split('"')[-2]
+        WIFINETWORK = os.popen('iwconfig 2>&1 | grep -m1 \'^w\'').read().split('"')[-2]
     except:
         WIFINETWORK = 'NO_WIFI_NETWORK'
 statusfile = open('statusfile.txt','w') # we overwrite this with the latest
@@ -148,7 +152,7 @@ while(failedParseReplies < 5):
     s = requestSignedInt(BCS,[0x21,4]) # request state of charge
     if (s > 990) and (chargeStopped == False):
         os.system("brusastop")
-        os.system('timeout 5 curl -sG https://securepollingsystem.org/cgi-bin/darbo --data-urlencode "charge is complete, stopping charger"' )
+        os.system('timeout 5 curl -sG '+CGIURL+' --data-urlencode "charge is complete, stopping charger"' )
         chargeStopped = True
         time.sleep(5)
         os.system("ignition_off.sh") # turn off vehicle
@@ -171,7 +175,7 @@ while(failedParseReplies < 5):
         statusfile.flush()
         if (time.time() - webUpdateTime) > 60: # time in seconds between web updates
             getIPandWifi()
-            os.system('timeout 3 curl -sG https://securepollingsystem.org/cgi-bin/darbo --data-urlencode "' + printString + '	' + IPADDRESS + '	' + WIFINETWORK + '"' ) # timeout after 3 seconds
+            os.system('timeout 3 curl -sG '+CGIURL+' --data-urlencode "' + printString + '	' + IPADDRESS + '	' + WIFINETWORK + '"' ) # timeout after 3 seconds
             webUpdateTime = time.time() # reset timer
         #gv = getModuleVoltages()
         #print(str(gv)+' '+str(sum(gv)))
