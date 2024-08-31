@@ -6,19 +6,20 @@ import time
 config=open('bmswatch.conf','r').read().splitlines()
 SERIAL=config[0] # first line of bmswatch.conf should be like /dev/ttyS2
 
-serialPort = serial.Serial(port=SERIAL,baudrate=2400, bytesize=8, parity='N', stopbits=1, timeout=2000, xonxoff=0, rtscts=0)
-
+serialPort = serial.Serial(port=SERIAL,baudrate=2400, bytesize=8, parity='N', stopbits=1, timeout=5000, xonxoff=0, rtscts=0)
 
 def parseBMSpacket(printout=True):
     a = serialPort.read_all()
     startParseTime = time.time()
     while len(a) == 0 and (time.time() - startParseTime) < 5: # timeout in seconds
-        #print('.',end='')
+        print('.',end='')
         time.sleep(0.1)
         a = serialPort.read_all()
+    if len(a) == 48:
+        time.sleep(0.1)
+        a += serialPort.read_all()
     if len(a) == 0:
         return False
-    print() # NEWLINE
     if len(a) != 62:
         print("expected 62 bytes but got "+str(len(a))+", reading for a while and printing all:",end='')
         time.sleep(1)
@@ -27,16 +28,16 @@ def parseBMSpacket(printout=True):
         return a
     if a[0] == 0xff and a[1] == 0x3c and a[2] == 0x31:
         checksum = 0
-        for i in a[0:(1 + a[1])]:
+        for i in a[0:a[1]]:
             checksum = (i + checksum) % 256
-        print("checksum is "+str(a[(a[1]+1)])+" but expected "+str(checksum))
+        print("checksum is "+str(a[(a[1]+1)])+" but expected "+str(checksum)+" diff is "+str(abs(checksum - a[(a[1]+1)])))
         batteryVoltages = []
         for i in range(24):
-            volts = (a[i+2] + a[i+3]*256) / 1000
+            volts = (a[i*2+3] + a[i*2+4]*256) / 1000
             batteryVoltages.append(volts)
         tempSensors = []
         for i in range(24,28):
-            temp = (a[i+2] + a[i+3]*256) / 1000
+            temp = (a[i*2+3] + a[i*2+4]*256) / 1000
             tempSensors.append(temp)
         if printout:
             print(batteryVoltages)
