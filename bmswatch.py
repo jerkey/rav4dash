@@ -32,16 +32,19 @@ def parseBMSpacket(printout=True):
             checksum = (i + checksum) % 256
         print("checksum is "+str(a[(a[1]+1)])+" but expected "+str(checksum)+" diff is "+str(abs(checksum - a[(a[1]+1)])))
         batteryVoltages = []
+        batteryTotal = 0
         for i in range(24):
             volts = (a[i*2+3] + a[i*2+4]*256) / 1000
             batteryVoltages.append(volts)
+            batteryTotal += volts
         tempSensors = []
         for i in range(24,28):
             temp = (a[i*2+3] + a[i*2+4]*256) / 1000
             tempSensors.append(temp)
         if printout:
-            print(batteryVoltages)
-            print(tempSensors)
+            print(batteryVoltages, end='\t'+f"{batteryTotal:.5g}"+'\n')
+            print('max:'+f"{max(batteryVoltages):.4g}"+'\tmin:'+f"{min(batteryVoltages):.4g}"+'\tavg:'+f"{batteryTotal/24:.4g}")
+            print(tempSensors,end='')
         return batteryVoltages, tempSensors
     else:
         print("first 3 bytes returned were "+hex(a[0:3])+" expected ff 3c 31")
@@ -60,6 +63,7 @@ print('bmswatch.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 timeStarted = time.time()
 failedParseReplies = 0 # count how many failures to parse we've had
 while(failedParseReplies < 5):
+    time.sleep(0.1) # can't use control-C to interrupt without this pause
     try:
         batteryVoltages, tempSensors = parseBMSpacket()
     except:
