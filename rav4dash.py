@@ -129,7 +129,7 @@ def getIPandWifi():
     except:
         IPADDRESS = 'NO_IP_ADDRESS'
     try:
-        WIFINETWORK = os.popen('iwconfig 2>&1 | grep -m1 \'^w\'').read().split('"')[-2]
+        WIFINETWORK = os.popen('iwconfig 2>&1 | grep -m1 \'^w\'').read().split('"')[1]
     except:
         WIFINETWORK = 'NO_WIFI_NETWORK'
 statusfile = open('statusfile.txt','w') # we overwrite this with the latest
@@ -143,10 +143,17 @@ timeStarted = time.time()
 failedParseReplies = 0 # count how many failures to parse we've had
 webUpdateTime = 0 # we'll use this to remember when we last sent a web update
 loopTime = time.time()
+#print('req dtcs:')
+#sendPacket(BCS,[0x13]) # request DTCs
+#dtc = parseReply()
+#print('clear dtcs:')
+#sendPacket(BCS,[0x14]) # CLEAR DTCs
+#dtc = parseReply()
+#print('req dtcs:')
 #sendPacket(BCS,[0x13]) # request DTCs
 #dtc = parseReply()
 chargeStopped = False  # did we brusastop yet?
-while(failedParseReplies < 5):
+while(failedParseReplies < 25):
     v = requestSignedInt(BCS,[0x21,1]) # request voltage
     a = requestSignedInt(BCS,[0x21,3]) # request amperage
     s = requestSignedInt(BCS,[0x21,4]) # request state of charge
