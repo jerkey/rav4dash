@@ -58,6 +58,13 @@ def requestSignedInt(target, requestBytes):
     else:
         return False
 
+def getElconStats():
+    try:
+        stats = open('/tmp/elconv','r').readlines()[0].rstrip().split('\t')
+    except:
+        return ',,'
+    return str(stats[0])+','+str(stats[1])+','
+
 statusfile = open('bmsvoltages.txt','w') # we overwrite this with the latest
 print('bmswatch.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 timeStarted = time.time()
@@ -65,11 +72,12 @@ failedParseReplies = 0 # count how many failures to parse we've had
 while(failedParseReplies < 5):
     time.sleep(0.1) # can't use control-C to interrupt without this pause
     try:
-        batteryVoltages, tempSensors = parseBMSpacket(printout=False)
+        batteryVoltages, tempSensors = parseBMSpacket()#printout=False)
         printString = ''
         for i in batteryVoltages:
             printString += str(i)+','
-        print(printString)
+        printString += getElconStats()
+        #print(printString)
         logfile.write(printString+'\n')
         logfile.flush()
         statusfile.seek(0)
