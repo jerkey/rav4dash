@@ -5,14 +5,14 @@ import time
 
 config=open('bmswatch.conf','r').read().splitlines()
 SERIAL=config[0] # first line of bmswatch.conf should be like /dev/ttyS2
-
+logfile=open('bmslog_'+time.strftime('%Y%m%d%H%M%S')+'.log','w')
 serialPort = serial.Serial(port=SERIAL,baudrate=2400, bytesize=8, parity='N', stopbits=1, timeout=5000, xonxoff=0, rtscts=0)
 
 def parseBMSpacket(printout=True):
     a = serialPort.read_all()
     startParseTime = time.time()
     while len(a) == 0 and (time.time() - startParseTime) < 5: # timeout in seconds
-        print('.',end='')
+        #print('.',end='')
         time.sleep(0.1)
         a = serialPort.read_all()
     if len(a) == 48:
@@ -30,7 +30,7 @@ def parseBMSpacket(printout=True):
         checksum = 0
         for i in a[0:a[1]]:
             checksum = (i + checksum) % 256
-        print("checksum is "+str(a[(a[1]+1)])+" but expected "+str(checksum)+" diff is "+str(abs(checksum - a[(a[1]+1)])))
+        #print("checksum is "+str(a[(a[1]+1)])+" but expected "+str(checksum)+" diff is "+str(abs(checksum - a[(a[1]+1)])))
         batteryVoltages = []
         batteryTotal = 0
         for i in range(24):
@@ -58,14 +58,24 @@ def requestSignedInt(target, requestBytes):
     else:
         return False
 
-tatusfile = open('bmsvoltages.txt','w') # we overwrite this with the latest
+statusfile = open('bmsvoltages.txt','w') # we overwrite this with the latest
 print('bmswatch.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 timeStarted = time.time()
 failedParseReplies = 0 # count how many failures to parse we've had
 while(failedParseReplies < 5):
     time.sleep(0.1) # can't use control-C to interrupt without this pause
     try:
-        batteryVoltages, tempSensors = parseBMSpacket()
+        batteryVoltages, tempSensors = parseBMSpacket(printout=False)
+        printString = ''
+        for i in batteryVoltages:
+            printString += str(i)+','
+        print(printString)
+        logfile.write(printString+'\n')
+        logfile.flush()
+        statusfile.seek(0)
+        statusfile.write(printString)
+        statusfile.truncate()
+        statusfile.flush()
     except:
         print('.')
         #failedParseReplies += 1
