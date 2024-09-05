@@ -143,17 +143,22 @@ timeStarted = time.time()
 failedParseReplies = 0 # count how many failures to parse we've had
 webUpdateTime = 0 # we'll use this to remember when we last sent a web update
 loopTime = time.time()
-#print('req dtcs:')
+
+#print('req dtcs:',end='	')
 #sendPacket(BCS,[0x13]) # request DTCs
-#dtc = parseReply()
-#print('clear dtcs:')
+#time.sleep(1)
+#print(parseReply())
+#print('clear dtcs:',end='	')
 #sendPacket(BCS,[0x14]) # CLEAR DTCs
-#dtc = parseReply()
-#print('req dtcs:')
+#time.sleep(1)
+#print(parseReply())
+#print('req dtcs:',end='	')
 #sendPacket(BCS,[0x13]) # request DTCs
-#dtc = parseReply()
+#time.sleep(1)
+#print(parseReply())
+
 chargeStopped = False  # did we brusastop yet?
-while(failedParseReplies < 25):
+while(failedParseReplies < 5):
     v = requestSignedInt(BCS,[0x21,1]) # request voltage
     a = requestSignedInt(BCS,[0x21,3]) # request amperage
     s = requestSignedInt(BCS,[0x21,4]) # request state of charge
