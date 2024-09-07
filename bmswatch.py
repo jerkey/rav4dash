@@ -27,10 +27,11 @@ def parseBMSpacket(printout=True):
         print(a.hex())
         return a
     if a[0] == 0xff and a[1] == 0x3c and a[2] == 0x31:
-        checksum = 0
-        for i in a[0:a[1]]:
-            checksum = (i + checksum) % 256
-        #print("checksum is "+str(a[(a[1]+1)])+" but expected "+str(checksum)+" diff is "+str(abs(checksum - a[(a[1]+1)])))
+        xorsum = 0
+        for i in a[1:a[1]]:
+            xorsum = xorsum ^ i
+        if xorsum != a[(a[1]+1)]:
+            print("xorsum is "+str(a[(a[1]+1)])+" but expected "+str(xorsum)+" diff is "+str(abs(xorsum - a[(a[1]+1)])))
         batteryVoltages = []
         batteryTotal = 0
         for i in range(24):
@@ -43,8 +44,8 @@ def parseBMSpacket(printout=True):
             tempSensors.append(temp)
         if printout:
             print(batteryVoltages, end='\t'+f"{batteryTotal:.5g}"+'\n')
+            print(tempSensors,end='\t')
             print('max:'+f"{max(batteryVoltages):.4g}"+'\tmin:'+f"{min(batteryVoltages):.4g}"+'\tavg:'+f"{batteryTotal/24:.4g}")
-            print(tempSensors,end='')
         return batteryVoltages, tempSensors
     else:
         print("first 3 bytes returned were "+hex(a[0:3])+" expected ff 3c 31")
@@ -85,6 +86,6 @@ while(failedParseReplies < 5):
         statusfile.truncate()
         statusfile.flush()
     except:
-        print('.')
+        print('.',end='')
         #failedParseReplies += 1
 
