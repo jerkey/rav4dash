@@ -9,23 +9,16 @@ logfile=open('bmslog_'+time.strftime('%Y%m%d%H%M%S')+'.log','w')
 serialPort = serial.Serial(port=SERIAL,baudrate=2400, bytesize=8, parity='N', stopbits=1, timeout=5000, xonxoff=0, rtscts=0)
 
 def parseBMSpacket(printout=True):
-    a = serialPort.read_all()
-    startParseTime = time.time()
-    while len(a) == 0 and (time.time() - startParseTime) < 5: # timeout in seconds
-        #print('.',end='')
-        time.sleep(0.1)
-        a = serialPort.read_all()
-    if len(a) == 48:
-        time.sleep(0.1)
-        a += serialPort.read_all()
-    if len(a) == 0:
-        return False
+    a = []
+    a.append(0)
+    while a[0] != 255:
+        r = serialPort.read(1)
+        if len(r) == 1:
+            a[0] = r[0]
+    a += serialPort.read(1)     # read the length byte
+    a += serialPort.read(a[1])  # read that number more bytes
     if len(a) != 62:
-        print("expected 62 bytes but got "+str(len(a))+", reading for a while and printing all:",end='')
-        time.sleep(1)
-        a += serialPort.read_all()
-        print(a.hex())
-        return a
+        print("expected 62 bytes but got "+str(len(a)))
     if a[0] == 0xff and a[1] == 0x3c and a[2] == 0x31:
         xorsum = 0
         for i in a[1:a[1]]:
