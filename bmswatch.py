@@ -6,7 +6,9 @@ import time
 config=open('bmswatch.conf','r').read().splitlines()
 SERIAL=config[0] # first line of bmswatch.conf should be like /dev/ttyS2
 logfile=open('bmslog_'+time.strftime('%Y%m%d%H%M%S')+'.log','w')
-serialPort = serial.Serial(port=SERIAL,baudrate=2400, bytesize=8, parity='N', stopbits=1, timeout=5000, xonxoff=0, rtscts=0)
+serialPort = serial.Serial(port=SERIAL,baudrate=2400, bytesize=8, parity='N', stopbits=1, timeout=5000, xonxoff=0, rtscts=0, dsrdtr=0, write_timeout=0.1)
+
+outboundBMSpacket = [1,2,3]
 
 def parseBMSpacket(printout=True):
     a = []
@@ -25,6 +27,9 @@ def parseBMSpacket(printout=True):
             xorsum = xorsum ^ i
         if xorsum != a[(a[1]+1)]:
             print("xorsum is "+str(a[(a[1]+1)])+" but expected "+str(xorsum)+" diff is "+str(abs(xorsum - a[(a[1]+1)])))
+        else: # XORsum is valid
+            outboundBMSpacket = a # update what we will send out
+        serialPort.write(bytearray(outboundBMSpacket)) # send packet out the serial port to the waiting BECM (even if it's stale)
         batteryVoltages = []
         batteryTotal = 0
         for i in range(24):
