@@ -41,8 +41,8 @@ def parseBMSpacket(printout=True):
             temp = (a[i*2+3] + a[i*2+4]*256) / 1000
             tempSensors.append(temp)
         if printout:
-            print(batteryVoltages, end='\t'+f"{batteryTotal:.5g}"+'\n')
-            print(tempSensors,end='\t')
+            #print(batteryVoltages, end='\t'+f"{batteryTotal:.5g}"+'\n')
+            print(tempSensors,end='\ttot:'+f"{batteryTotal:.5g}"+'\t')
             print('max:'+f"{max(batteryVoltages):.4g}"+'\tmin:'+f"{min(batteryVoltages):.4g}"+'\tavg:'+f"{batteryTotal/24:.4g}")
         return batteryVoltages, tempSensors
     else:
