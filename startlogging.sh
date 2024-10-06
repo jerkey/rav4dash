@@ -6,3 +6,4 @@ while [ ${EXITCODE}sdfsdf == "0sdfsdf" ] ; do
   EXITCODE=$?
   echo EXITCODE=$EXITCODE
 done
+read

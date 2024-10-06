@@ -132,7 +132,7 @@ def getIPandWifi():
         WIFINETWORK = os.popen('iwconfig 2>&1 | grep -m1 \'^w\'').read().split('"')[1]
     except:
         WIFINETWORK = 'NO_WIFI_NETWORK'
-statusfile = open('statusfile.txt','w') # we overwrite this with the latest
+statusfile = open('rav4dash.status','w') # we overwrite this with the latest
 print('rav4dash.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 getIPandWifi()
 initBCS()
@@ -162,13 +162,13 @@ while(failedParseReplies < 5):
     v = requestSignedInt(BCS,[0x21,1]) # request voltage
     a = requestSignedInt(BCS,[0x21,3]) # request amperage
     s = requestSignedInt(BCS,[0x21,4]) # request state of charge
-    if (s > 990) and (chargeStopped == False):
+    t = requestSignedInt(BCS,[0x21,6]) # request battery pack temperature
+    if (s > 990) and (chargeStopped == False): # in the "after-magne-charge but still plugged in" state, the above requests are answered once per initBCS()
         os.system("brusastop")
         os.system('timeout 5 curl -sG '+CGIURL+' --data-urlencode "charge is complete, stopping charger"' )
         chargeStopped = True
         time.sleep(5)
         os.system("ignition_off.sh") # turn off vehicle
-    t = requestSignedInt(BCS,[0x21,6]) # request battery pack temperature
     if v and a and s and t:
         failedParseReplies = 0; # reset fail counter
         volts = v/10.0

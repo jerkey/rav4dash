@@ -46,7 +46,7 @@ def status_fields():
   return {part[0]: part[1] for part in parts}
 
 def last_status():
-  last_log = 'statusfile.txt'
+  last_log = 'rav4dash.status'
   with open(last_log) as f:
     lines = f.readlines()
     statuses = [x for x in lines if x.startswith('V:')]

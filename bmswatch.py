@@ -5,7 +5,7 @@ import time
 
 config=open('bmswatch.conf','r').read().splitlines()
 SERIAL=config[0] # first line of bmswatch.conf should be like /dev/ttyS2
-logfile=open('bmslog_'+time.strftime('%Y%m%d%H%M%S')+'.log','w')
+logfile=open('bmslog_'+time.strftime('%Y%m%d%H%M%S')+'.csv','w')
 serialPort = serial.Serial(port=SERIAL,baudrate=2400, bytesize=8, parity='N', stopbits=1, timeout=5000, xonxoff=0, rtscts=0, dsrdtr=0, write_timeout=0.1)
 
 outboundBMSpacket = [1,2,3]
@@ -72,7 +72,7 @@ while(failedParseReplies < 5):
     time.sleep(0.1) # can't use control-C to interrupt without this pause
     try:
         batteryVoltages, tempSensors = parseBMSpacket()#printout=False)
-        printString = ''
+        printString = str(int(time.time()))+',' # unixtime at beginning of each line
         for i in batteryVoltages:
             printString += str(i)+','
         printString += getElconStats()
