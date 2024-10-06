@@ -169,7 +169,7 @@ while(failedParseReplies < 5):
         chargeStopped = True
         time.sleep(5)
         os.system("ignition_off.sh") # turn off vehicle
-    if v and a and s and t:
+    if v and s and t: # a is 0 in the "after-magne-charge but still plugged in" state
         failedParseReplies = 0; # reset fail counter
         volts = v/10.0
         amps = a/10.0
@@ -193,6 +193,7 @@ while(failedParseReplies < 5):
         #print(str(gv)+' '+str(sum(gv)))
     else:
         failedParseReplies += 1
+        print('vRaw:'+str(v)) '	aRaw:'+str(a) '	sRaw:'+str(s) '	tRaw:'+str(t))
         print("timed out querying for volts or amps, failedParseReplies = "+str(failedParseReplies))
     time.sleep(1)
 
