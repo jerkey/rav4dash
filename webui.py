@@ -43,7 +43,11 @@ def ignition_off():
 def status_fields():
   status = last_status()
   parts = [x.split(':', 1) for x in status.split() if ':' in x]
-  return {part[0]: part[1] for part in parts}
+  status_fields = {part[0]: part[1] for part in parts}
+  bms = bms_status()
+  status_fields['V13'] = '%.2f' % bms[0]
+  status_fields['Vmean'] = '%.2f' % bms[1]
+  return status_fields
 
 def last_status():
   last_log = 'rav4dash.status'
@@ -53,6 +57,12 @@ def last_status():
     last_status = statuses.pop() if statuses else 'no status'
   last_update = datetime.fromtimestamp(os.path.getmtime(last_log), timezone.utc)
   return 'Time:%s ' % last_update.astimezone().strftime("%Y-%m-%dT%H:%M:%S") + last_status
+
+def bms_status():
+  last_log = 'bmsvoltages.txt'
+  with open(last_log) as f:
+    bms_voltages = f.readlines()[0].split(',')[1:25]
+  return (float(bms_voltages[12]), sum([float(v) for i, v in enumerate(bms_voltages) if i != 12]) / 23)
 
 if __name__ == '__main__':
   app.run()
