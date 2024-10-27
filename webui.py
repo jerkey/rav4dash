@@ -44,9 +44,17 @@ def status_fields():
   status = last_status()
   parts = [x.split(':', 1) for x in status.split() if ':' in x]
   status_fields = {part[0]: part[1] for part in parts}
-  bms = bms_status()
-  status_fields['V13'] = '%.2f' % bms[0]
-  status_fields['Vmean'] = '%.2f' % bms[1]
+  cell_13, cell_mean = bms_status()
+  diff = abs(cell_13 - cell_mean)
+  badness = min(diff / 7.0, 1.0)
+  tint = 255 - int(badness * 255)
+  if cell_13 < cell_mean:
+    bgcolor = f'ff{tint:02x}{tint:02x}'
+  else:
+    bgcolor = f'ff{tint:02x}ff'
+  status_fields['_bgcolor'] = bgcolor
+  status_fields['V13'] = f'{cell_13:.2f}'
+  status_fields['Vmean'] = f'{cell_mean:.2f}'
   return status_fields
 
 def last_status():

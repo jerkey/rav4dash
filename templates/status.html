@@ -1,3 +1,7 @@
+<div style="background-color: #{{fields['_bgcolor']}}">
 {% for key, value in fields.items() %}
+{% if not key.startswith('_') %}
 {{key}}: {{value}}<br />
+{% endif %}
 {% endfor %}
+</div>
