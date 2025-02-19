@@ -30,12 +30,13 @@ def sendPacket(destination, data):
 def parseReply(printout=True):
     a = serialPort.read_all()
     startParseTime = time.time()
-    while len(a) == 0 and (time.time() - startParseTime) < 5: # timeout in seconds
-        #print('.',end='')
+    while len(a) == 0 and ((time.time() - startParseTime) < 2): # timeout in seconds
+        print('.',end='')
         time.sleep(0.1)
         a = serialPort.read_all()
     if len(a) == 0:
         serialPort.read_all() # clear buffer
+        print(')',end='')
         return False
     if a[0] > 0x87 or a[0] < 0x81:
         print("first byte returned was "+hex(a[0])+" expected 0x81-0x87")
@@ -156,9 +157,12 @@ loopTime = time.time()
 #sendPacket(BCS,[0x13]) # request DTCs
 #time.sleep(1)
 #print(parseReply())
-
+#sendPacket(BCS,[0x14]) # CLEAR  DTCs
+#print(parseReply())
+#sendPacket(BCS,[0x13]) # request DTCs
+#print(parseReply())
 chargeStopped = False  # did we brusastop yet?
-while(failedParseReplies < 5):
+while(failedParseReplies < 2):
     v = requestSignedInt(BCS,[0x21,1]) # request voltage
     a = requestSignedInt(BCS,[0x21,3]) # request amperage
     s = requestSignedInt(BCS,[0x21,4]) # request state of charge
@@ -193,7 +197,7 @@ while(failedParseReplies < 5):
         #print(str(gv)+' '+str(sum(gv)))
     else:
         failedParseReplies += 1
-        print('vRaw:'+str(v)) '	aRaw:'+str(a) '	sRaw:'+str(s) '	tRaw:'+str(t))
+        #print('vRaw:'+str(v)) '	aRaw:'+str(a) '	sRaw:'+str(s) '	tRaw:'+str(t))
         print("timed out querying for volts or amps, failedParseReplies = "+str(failedParseReplies))
     time.sleep(1)
 
