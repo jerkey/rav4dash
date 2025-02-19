@@ -20,9 +20,14 @@ def ignition_on():
   subprocess.run(['echo', '0'], stdout=gpio60)
   return ('', 204)
 
-@app.route('/charging')
-def charging():  # tmux new-window -d -n 'charging' -t sess1:4 '$HOME/battbin/statusfilewatch.sh'
+@app.route('/startcharging')
+def startcharging():  # tmux new-window -d -n 'charging' -t sess1:4 '$HOME/battbin/statusfilewatch.sh'
   subprocess.run(['/home/debian/bin/charging.sh'])
+  return ('', 204)
+
+@app.route('/stopcharging')
+def stopcharging():  # kill $(pgrep -f statusfilewatch.sh)
+  subprocess.run(['/home/debian/bin/killcharging.sh'])
   return ('', 204)
 
 @app.route('/ignition_off')
