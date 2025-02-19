@@ -167,12 +167,12 @@ while(failedParseReplies < 2):
     a = requestSignedInt(BCS,[0x21,3]) # request amperage
     s = requestSignedInt(BCS,[0x21,4]) # request state of charge
     t = requestSignedInt(BCS,[0x21,6]) # request battery pack temperature
-    if (s > 990) and (chargeStopped == False): # in the "after-magne-charge but still plugged in" state, the above requests are answered once per initBCS()
-        os.system("brusastop")
+    if (s > 900000) and (chargeStopped == False): # in the "after-magne-charge but still plugged in" state, the above requests are answered once per initBCS()
+        #os.system("brusastop")
         os.system('timeout 5 curl -sG '+CGIURL+' --data-urlencode "charge is complete, stopping charger"' )
         chargeStopped = True
         time.sleep(5)
-        os.system("ignition_off.sh") # turn off vehicle
+        #os.system("ignition_off.sh") # turn off vehicle
     if v and s and t: # a is 0 in the "after-magne-charge but still plugged in" state
         failedParseReplies = 0; # reset fail counter
         volts = v/10.0

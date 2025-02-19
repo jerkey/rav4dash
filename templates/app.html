@@ -17,12 +17,12 @@
         $.get('/ignition_on');
       });
 
-      $('#test_brusa').on('click', function() {
-        $.get('/test_brusa');
-      });
-
       $('#ignition_off').on('click', function() {
         $.get('/ignition_off');
+      });
+
+      $('#charging').on('click', function() {
+        $.get('/charging');
       });
 
     });
@@ -31,7 +31,7 @@
 <body>
   <div id="status"></div><br />
   <button id="ignition_on">ignition on</button><br />
-  <button id="test_brusa">test brusa</button><br />
-  <button id="ignition_off">ignition off</button>
+  <button id="ignition_off">ignition off</button><br />
+  <button id="charging">charging</button>
   </body>
 </html>

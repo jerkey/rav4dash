@@ -20,18 +20,9 @@ def ignition_on():
   subprocess.run(['echo', '0'], stdout=gpio60)
   return ('', 204)
 
-@app.route('/test_brusa')
-def test_brusa():
-  serial = '/dev/ttyS2'
-  subprocess.run(['stty', '-F', serial, '19200'])
-  tty = open(serial, 'w')
-  subprocess.run(['echo', '-ne', 'qq\n'], stdout=tty)
-  time.sleep(0.5)
-  subprocess.run(['echo', '-ne', 'profile\r\n'], stdout=tty)
-  time.sleep(0.5)
-  subprocess.run(['echo', '-ne', 'profile\r\n'], stdout=tty)
-  time.sleep(5)
-  subprocess.run(['echo', '-ne', r'\x02\x41\xf0\x01\x09\x04\x01\x41\x03'], stdout=tty)
+@app.route('/charging')
+def charging():  # tmux new-window -d -n 'charging' -t sess1:4 '$HOME/battbin/statusfilewatch.sh'
+  subprocess.run(['/home/debian/bin/charging.sh'])
   return ('', 204)
 
 @app.route('/ignition_off')
