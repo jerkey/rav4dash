@@ -69,7 +69,10 @@ def last_status():
 def bms_status():
   last_log = 'bmsvoltages.txt'
   with open(last_log) as f:
-    bms_voltages = f.readlines()[0].split(',')[1:25]
+    try:
+      bms_voltages = f.readlines()[0].split(',')[1:25]
+    except:
+      bms_voltages = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   return (float(bms_voltages[12]), sum([float(v) for i, v in enumerate(bms_voltages) if i != 12]) / 23)
 
 if __name__ == '__main__':
