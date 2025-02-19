@@ -9,7 +9,7 @@ SERIAL=config[0] # first line of rav4dash.conf should be like /dev/ttyS4
 CGIURL=config[1] # second line of rav4dash.conf should be like https://website.com/cgi-bin/logcar.sh
 
 # RTS will go True upon opening serial port, and False when program closes
-serialPort = serial.Serial(port=SERIAL,baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=2000, xonxoff=0, rtscts=0)
+serialPort = serial.Serial(port=SERIAL,baudrate=9600, bytesize=8, parity='N', stopbits=1, timeout=2, xonxoff=0, rtscts=0)
 
 BCS = 0xD5 # battery controller
 ECS = 0x16 # engine controller
