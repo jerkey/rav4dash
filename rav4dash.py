@@ -3,6 +3,7 @@
 import serial
 import time
 import os
+import inspect
 
 config=open('rav4dash.conf','r').read().splitlines()
 SERIAL=config[0] # first line of rav4dash.conf should be like /dev/ttyS4
@@ -31,15 +32,15 @@ def parseReply(printout=True):
     a = serialPort.read_all()
     startParseTime = time.time()
     while len(a) == 0 and ((time.time() - startParseTime) < 2): # timeout in seconds
-        print('.',end='')
+        #print('.',end='')
         time.sleep(0.1)
         a = serialPort.read_all()
     if len(a) == 0:
         serialPort.read_all() # clear buffer
-        print(')',end='')
+        #print(')',end='')
         return False
     if a[0] > 0x87 or a[0] < 0x81:
-        print("first byte returned was "+hex(a[0])+" expected 0x81-0x87")
+        print("first byte returned was "+hex(a[0])+" expected 0x81-0x87, called from line "+str(inspect.stack()[1][2]))
         return False
     if a[0] & 15 != len(a) - 4:
         print("strange, expected "+str((a[0] & 15) + 4)+" bytes but got "+str(len(a))+", reading for a while and printing all:",end='')
@@ -136,6 +137,7 @@ def getIPandWifi():
 statusfile = open('rav4dash.status','w') # we overwrite this with the latest
 print('rav4dash.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 getIPandWifi()
+print('IP: '+IPADDRESS+'	WIFI: '+WIFINETWORK)
 initBCS()
 print('initBCS() success at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
 print('IP address is '+IPADDRESS+' on wifi network '+WIFINETWORK)
