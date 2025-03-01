@@ -55,10 +55,14 @@ def status_fields():
 
 def last_status():
   last_log = 'rav4dash.status'
-  with open(last_log) as f:
-    lines = f.readlines()
-    statuses = [x for x in lines if x.startswith('V:')]
-    last_status = statuses.pop() if statuses else 'no status'
+  last_log_age = time.time() - os.path.getctime(last_log)
+  if (last_log_age < 5):
+    with open(last_log) as f:
+      lines = f.readlines()
+      statuses = [x for x in lines if x.startswith('V:')]
+      last_status = statuses.pop() if statuses else 'no status'
+  else:
+    last_status = 'no_status_for:'+str(int(last_log_age))
   last_update = datetime.fromtimestamp(os.path.getmtime(last_log), timezone.utc)
   return 'Time:%s ' % last_update.astimezone().strftime("%Y-%m-%dT%H:%M:%S") + last_status
 
