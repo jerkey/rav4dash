@@ -2,6 +2,7 @@
 
 import serial
 import time
+import os
 
 config=open('bmswatch.conf','r').read().splitlines()
 SERIAL=config[0] # first line of bmswatch.conf should be like /dev/ttyS2
@@ -62,6 +63,8 @@ def getElconStats():
         stats = open('/tmp/elconv','r').readlines()[0].rstrip().split('\t')
     except:
         return ',,'
+    if (time.time() - os.path.getctime('/tmp/elconv') > 5):
+        return ',,'
     return str(stats[0])+','+str(stats[1])+','
 
 statusfile = open('bmsvoltages.txt','w') # we overwrite this with the latest
@@ -76,6 +79,8 @@ while(failedParseReplies < 5):
         for i in batteryVoltages:
             printString += str(i)+','
         printString += getElconStats()
+        for i in tempSensors:
+            printString += str(i)+','
         #print(printString)
         logfile.write(printString+'\n')
         logfile.flush()
