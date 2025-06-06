@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import os
 import subprocess
 import time
@@ -74,6 +74,17 @@ def bms_status():
     except:
       bms_voltages = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   return (float(bms_voltages[12]), sum([float(v) for i, v in enumerate(bms_voltages) if i != 12]) / 23)
+
+aux_battery = {}
+@app.route('/aux_battery_push') # for sending aux battery data to here
+def aux_battery_push():
+  args = request.args
+  aux_battery.update(args) # update values in aux_battery with whatever was pushed
+  if all(key in args for key in ['max_cell_voltage','min_cell_voltage','max_cell_temp']):
+    print('all: ',end='')
+    aux_battery['updated'] = time.time()
+  print(str(args))
+  return (str(args),200)
 
 if __name__ == '__main__':
   app.run()
