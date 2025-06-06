@@ -78,13 +78,16 @@ def bms_status():
 aux_battery = {}
 @app.route('/aux_battery_push') # for sending aux battery data to here
 def aux_battery_push():
+  global aux_battery
   args = request.args
   aux_battery.update(args) # update values in aux_battery with whatever was pushed
   if all(key in args for key in ['max_cell_voltage','min_cell_voltage','max_cell_temp']):
-    print('all: ',end='')
     aux_battery['updated'] = time.time()
-  print(str(args))
-  return (str(args),200)
+  return (str(dict(args)),200)
+
+@app.route('/aux_battery_get') # for seeing aux battery data to here
+def aux_battery_get():
+  return (str(aux_battery),200)
 
 if __name__ == '__main__':
   app.run()
