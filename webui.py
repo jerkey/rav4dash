@@ -21,14 +21,14 @@ def ignition_on():
   subprocess.run(['echo', '0'], stdout=gpio60)
   return ('', 204)
 
-@app.route('/startcharging')
-def startcharging():  # tmux new-window -d -n 'charging' -t sess1:4 '$HOME/battbin/statusfilewatch.sh'
-  subprocess.run(['/home/debian/bin/charging.sh'])
+@app.route('/wake_aux_battery')
+def wake_aux_battery():  # tmux new-window -d -n 'charging' -t sess1:4 '$HOME/battbin/statusfilewatch.sh'
+  subprocess.run(['/home/debian/bin/wakeruatlf'])
   return ('', 204)
 
-@app.route('/stopcharging')
-def stopcharging():  # kill $(pgrep -f statusfilewatch.sh)
-  subprocess.run(['/home/debian/bin/killcharging.sh'])
+@app.route('/suspend_aux_battery')
+def suspend_aux_battery():  # kill $(pgrep -f statusfilewatch.sh)
+  subprocess.run(['/home/debian/bin/suspendruatlf'])
   return ('', 204)
 
 @app.route('/ignition_off')
