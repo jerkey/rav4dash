@@ -1,3 +1,4 @@
+# vim: ts=2 sw=2
 from datetime import datetime, timezone
 from flask import Flask, render_template, request
 import os
@@ -51,6 +52,9 @@ def status_fields():
   status_fields['_bgcolor'] = bgcolor
   status_fields['V13'] = f'{cell_13:.2f}'
   status_fields['Vmean'] = f'{cell_mean:.2f}'
+  if (time.time() - aux_battery['updated'] < 10): # if data is not stale
+    for i in ['max_cell_voltage','min_cell_voltage','max_cell_temp','total_voltage']:
+      status_fields['aux_'+i]=aux_battery[i]
   return status_fields
 
 def last_status():
@@ -75,7 +79,7 @@ def bms_status():
       bms_voltages = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   return (float(bms_voltages[12]), sum([float(v) for i, v in enumerate(bms_voltages) if i != 12]) / 23)
 
-aux_battery = {}
+aux_battery = {'updated':0}
 @app.route('/aux_battery_push') # for sending aux battery data to here
 def aux_battery_push():
   global aux_battery
