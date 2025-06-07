@@ -53,7 +53,7 @@ def status_fields():
   status_fields['V13'] = f'{cell_13:.2f}'
   status_fields['Vmean'] = f'{cell_mean:.2f}'
   if (time.time() - aux_battery['updated'] < 10): # if data is not stale
-    for i in ['max_cell_voltage','min_cell_voltage','max_cell_temp','total_voltage']:
+    for i in ['max_cell_voltage','min_cell_voltage','max_cell_temp','total_voltage','state']:
       status_fields['aux_'+i]=aux_battery[i]
   return status_fields
 
@@ -85,7 +85,7 @@ def aux_battery_push():
   global aux_battery
   args = request.args
   aux_battery.update(args) # update values in aux_battery with whatever was pushed
-  if all(key in args for key in ['max_cell_voltage','min_cell_voltage','max_cell_temp']):
+  if all(key in args for key in ['max_cell_voltage','min_cell_voltage','max_cell_temp','state']):
     aux_battery['updated'] = time.time()
   return (str(dict(args)),200)
 
