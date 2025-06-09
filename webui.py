@@ -93,5 +93,9 @@ def aux_battery_push():
 def aux_battery_get():
   return (str(aux_battery),200)
 
+@app.route('/aux_battery_status') # for seeing aux battery status
+def aux_battery_status():
+  return (os.popen('ssh ruatlf bin/htmlstatus.sh').read(),200)
+
 if __name__ == '__main__':
   app.run()
