@@ -22,12 +22,12 @@ def ignition_on():
   return ('', 204)
 
 @app.route('/wake_aux_battery')
-def wake_aux_battery():  # tmux new-window -d -n 'charging' -t sess1:4 '$HOME/battbin/statusfilewatch.sh'
+def wake_aux_battery():
   subprocess.run(['/home/debian/bin/wakeruatlf'])
   return ('', 204)
 
 @app.route('/suspend_aux_battery')
-def suspend_aux_battery():  # kill $(pgrep -f statusfilewatch.sh)
+def suspend_aux_battery():
   subprocess.run(['/home/debian/bin/suspendruatlf'])
   return ('', 204)
 
@@ -65,10 +65,15 @@ def status_fields():
   status_fields['_bgcolor'] = bgcolor
   #status_fields['V13'] = f'{cell_13:.2f}'
   #status_fields['Vmean'] = f'{cell_mean:.2f}'
+  try:
+    status_fields.pop('toyota_SOC') # DONT SHOW TOYOTA SOC
+    status_fields.pop('toyota_T') # DONT SHOW TOYOTA T
+  except:
+    status_fields['toyota_'] = 'no_data'
   if (time.time() - aux_battery['updated'] < 10): # if data is not stale
-    for i in ['max_cell_voltage','min_cell_voltage','max_cell_temp','total_voltage','state']:
+    for i in ['max_cell_voltage','min_cell_voltage','max_cell_temp','min_cell_SOC','average_SOC','state']:
       status_fields['aux_'+i]=aux_battery[i]
-  if (time.time() - charger['updated'] < 5): # if data is not stale
+  if (time.time() - charger['updated'] < 3): # if data is not stale
     for i in ['voltage','current','status']:
       status_fields['charger_'+i]=charger[i]
   return status_fields
@@ -79,7 +84,8 @@ def last_status():
   if (last_log_age < 5):
     with open(last_log) as f:
       lines = f.readlines()
-      statuses = [x for x in lines if x.startswith('V:')]
+      lines[0] = 'toyota_' + lines[0].replace('	','	toyota_')
+      statuses = [x for x in lines if x.startswith('toyota_V:')]
       last_status = statuses.pop() if statuses else 'no status'
   else:
     last_status = 'no_status_for:'+str(int(last_log_age))
