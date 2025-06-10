@@ -10,6 +10,7 @@ canformat = '<IB3x8s' # from https://python-can.readthedocs.io/en/1.5.2/_modules
 targetVoltage = 0.0
 targetCurrent = 0.0
 status = 255
+status_text = "unknown"
 seenVoltage = 0
 seenCurrent = 0
 lastSeen1806E5F4 = 0
@@ -45,7 +46,7 @@ class CanBus():
     self.canSocket.settimeout(1)
 
   def receiveMessages(self):
-    global status, seenVoltage, seenCurrent, lastSeen1806E5F4
+    global status, status_text, seenVoltage, seenCurrent, lastSeen1806E5F4
     try:
       raw_bytes = self.canSocket.recv(16)
       if raw_bytes != None: # if a CAN message was waiting
@@ -62,76 +63,70 @@ class CanBus():
           status_text = status_text + ", Wrong input voltage at AC plug" if (status & 4) else status_text
           status_text = status_text + ", No battery detected"      if (status & 8) else status_text
           status_text = status_text + ", CAN error?"      if (status & 16) else status_text
-          #print("voltage: {}	current: {}	Errors: ".format(seenVoltage, seenCurrent)+status_text)
-          push_url = 'http://192.168.123.1/charger_push'
-          params = {'voltage' : seenVoltage, 'current' : seenCurrent, 'status' : status_text }
-          push_response = requests.get(push_url, params=params)
-          if get_data.status_code == 200:
-            try:
-              print(push_response.json())
-            except:
-              print(push_response.text)
-          else:
-            print("push_response failed with status code: {}".format(get_data.status_code))
+          if status > 0:
+            push_url = 'http://192.168.123.1/charger_push'
+            params = {'voltage' : seenVoltage, 'current' : seenCurrent, 'status' : status_text }
+            push_response = requests.get(push_url, params=params)
     except:
       print("e",end="")
 
   def sendMessages(self):
-    global last1Hz
-    timenow = time.time() # only call time.time() once to save time
+    rawID = 0x1806E5F4 | CAN_EFF_FLAG # B cansend can1 1806E5F4#0DC8003200000000
+    candatalist = [0,0,0,0,0,0,0,0] # init list
+    candatalist[0] = int((targetVoltage * 10) / 256)
+    candatalist[1] = int((targetVoltage * 10 % 256))
+    candatalist[2] = int((targetCurrent * 10) / 256)
+    candatalist[3] = int((targetCurrent * 10 % 256))
+    #print("tv {}	TC {}".format(targetVoltage,targetCurrent),end='	')
 
-    if timenow - last1Hz > 1.0: # these CAN messages go out one time per second
-      last1Hz  = timenow
-      print("s",end='')
-
-      rawID = 0x1806E5F4 | CAN_EFF_FLAG # B cansend can1 1806E5F4#0DC8003200000000
-      candatalist = [0,0,0,0,0xFF,0,0,0] # init list
-      candatalist[0] = int((targetVoltage * 10) / 256)
-      candatalist[1] = int((targetVoltage * 10 % 256))
-      candatalist[2] = int((targetCurrent * 10) / 256)
-      candatalist[3] = int((targetCurrent * 10 % 256))
-      #print("tv {}	TC {}".format(targetVoltage,targetCurrent),end='	')
-
-      candata = bytes(candatalist) # turn into bytes to be sent
-      self.canSocket.send(struct.pack(canformat, rawID, 8, candata))
+    candata = bytes(candatalist) # turn into bytes to be sent
+    self.canSocket.send(struct.pack(canformat, rawID, 8, candata))
 
   def run(self):
-    global lastIgnitionFalse, targetVoltage, targetCurrent
+    global lastIgnitionFalse, targetVoltage, targetCurrent, last1Hz
+    charge_desired = {'ignition' : False } # reinitialize
     while True:
-      get_url = 'http://192.168.123.1/charger_get'
-      get_data = requests.get(get_url)
-      charge_desired = {} # reinitialize empty
-      if get_data.status_code == 200:
-        try:
-          charge_desired = get_data.json()
-          #print('state: '+charge_desired['state'],end='')
-          #if charge_desired['ignition']:
-          #  print('web ignition is on')
-          #else:
-          #  print('webignition is OFF')
-        except:
-          print('text response: '+get_data.text)
-      else:
-        print("get_data failed with status code: {}".format(get_data.status_code))
+      self.receiveMessages()
+
+      if time.time() - last1Hz > 1.0: # one time per second
+        last1Hz  = time.time()
+
+        if time.time() - lastSeen1806E5F4 < 1.0:
+          push_url = 'http://192.168.123.1/charger_push'
+          params = {'voltage' : seenVoltage, 'current' : seenCurrent, 'status' : status_text }
+          push_response = requests.get(push_url, params=params)
+
+        charge_desired = {'ignition' : False } # reinitialize
+        get_url = 'http://192.168.123.1/charger_get'
+        get_data = requests.get(get_url)
+        if get_data.status_code == 200:
+          try:
+            charge_desired.update(get_data.json())
+            print(charge_desired)
+          except:
+            print('text response: '+get_data.text)
+        else:
+          print("get_data failed with status code: {}".format(get_data.status_code))
 
       if charge_desired['ignition']:
         try:
           targetVoltage = charge_desired['targetVoltage']
           targetCurrent = charge_desired['targetCurrent']
-          if (time.time() - lastSeen1806E5F4 < 10):
+          if (time.time() - lastSeen1806E5F4 < 5):
             print("k",end='')
             self.sendMessages()
-          if (time.time() - lastIgnitionFalse < 3):
+          if (time.time() - lastIgnitionFalse < 4):
             print("sending canbus because ignition turned on")
             self.sendMessages()
+            time.sleep(1)
         except:
           pass
       else:
         lastIgnitionFalse = time.time()
 
-      self.receiveMessages()
       time.sleep(0.1)
 
 if __name__ == '__main__':
+  print('starting')
   can_bus = CanBus(can_device='can1')
   can_bus.run()
