@@ -47,24 +47,29 @@ class CanBus():
 
   def receiveMessages(self):
     global status, status_text, seenVoltage, seenCurrent, lastSeen1806E5F4
-    try:
-      raw_bytes = self.canSocket.recv(16)
-      if raw_bytes != None: # if a CAN message was waiting
-        print('v',end='')
-        rawID,DLC,candata = struct.unpack(canformat,raw_bytes)
-        canID = rawID & 0x1FFFFFFF
-        if canID == 0x18FF50E5:
-          lastSeen1806E5F4 = time.time()
-          seenVoltage = (candata[1] + (candata[0] * 256)) / 10.0
-          seenCurrent = (candata[3] + (candata[2] * 256)) / 10.0
-          status  = candata[4] & 0x1F
-          status_text = "Hardware failure" if (status & 1) else ""
-          status_text = status_text + ", too hot"            if (status & 2) else status_text
-          status_text = status_text + ", Wrong input voltage at AC plug" if (status & 4) else status_text
-          status_text = status_text + ", No battery detected"      if (status & 8) else status_text
-          status_text = status_text + ", CAN error?"      if (status & 16) else status_text
-    except:
-      print("e",end="")
+    canID = 0x18000000
+    while canID & 0x18FFFFF0 == 0x18000000: # eat useless 0x1800000x messages
+      try:
+        raw_bytes = self.canSocket.recv(16)
+        if raw_bytes != None: # if a CAN message was waiting
+          print('v',end='')
+          rawID,DLC,candata = struct.unpack(canformat,raw_bytes)
+          canID = rawID & 0x1FFFFFFF
+          if canID == 0x18FF50E5:
+            lastSeen1806E5F4 = time.time()
+            seenVoltage = (candata[1] + (candata[0] * 256)) / 10.0
+            seenCurrent = (candata[3] + (candata[2] * 256)) / 10.0
+            status  = candata[4] & 0x1F
+            status_text = "Hardware failure" if (status & 1) else ""
+            status_text = status_text + ", too hot"            if (status & 2) else status_text
+            status_text = status_text + ", Wrong input voltage at AC plug" if (status & 4) else status_text
+            status_text = status_text + ", No battery detected"      if (status & 8) else status_text
+            status_text = status_text + ", CAN error?"      if (status & 16) else status_text
+        else:
+          canID = 0 # no message was waiting, leave the while loop
+          print('n',end='')
+      except:
+        print("e",end="")
 
   def sendMessages(self):
     rawID = 0x1806E5F4 | CAN_EFF_FLAG # B cansend can1 1806E5F4#0DC8003200000000
@@ -89,11 +94,11 @@ class CanBus():
       if time.time() - last1Hz > 1.0: # one time per second
         last1Hz  = time.time()
 
-        if time.time() - lastSeen1806E5F4 < 1.0:
+        if time.time() - lastSeen1806E5F4 < 2.0:
           push_url = 'http://192.168.123.1/charger_push'
           params = {'voltage' : seenVoltage, 'current' : seenCurrent, 'status' : status_text }
           push_response = requests.get(push_url, params=params)
-          print(push_response,end='	')
+          print(push_response,end='sV: {}	sC {}	'.format(seenVoltage,seenCurrent))
 
         charge_desired = {'ignition' : False } # reinitialize
         get_url = 'http://192.168.123.1/charger_get'
