@@ -1,6 +1,6 @@
 # vim: ts=2 sw=2
 from datetime import datetime, timezone
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import os
 import subprocess
 import time
@@ -42,7 +42,10 @@ def status_fields():
   parts = [x.split(':', 1) for x in status.split() if ':' in x]
   status_fields = {part[0]: part[1] for part in parts}
   cell_13, cell_mean = bms_status()
-  cell_13 = float(aux_battery['min_cell_voltage'])
+  try:
+    cell_13 = float(aux_battery['min_cell_voltage'])
+  except:
+    cell_13 = 3.7 # no data, so we want no color
   cell_mean = 3.7 # absolute value for cell voltage
   diff = abs(cell_13 - cell_mean)
   badness = min(diff / 7.0, 1.0)
@@ -57,6 +60,9 @@ def status_fields():
   if (time.time() - aux_battery['updated'] < 10): # if data is not stale
     for i in ['max_cell_voltage','min_cell_voltage','max_cell_temp','total_voltage','state']:
       status_fields['aux_'+i]=aux_battery[i]
+  if (time.time() - charger['updated'] < 5): # if data is not stale
+    for i in ['voltage','current','status']:
+      status_fields['charger_'+i]=charger[i]
   return status_fields
 
 def last_status():
@@ -91,9 +97,30 @@ def aux_battery_push():
     aux_battery['updated'] = time.time()
   return (str(dict(args)),200)
 
+charger = {'updated':0}
+@app.route('/charger_push') # for sending aux battery data to here
+def charger_push():
+  global charger
+  args = request.args
+  charger.update(args) # update values in charger with whatever was pushed
+  if all(key in args for key in ['voltage','current','status']):
+    charger['updated'] = time.time()
+  return (str(dict(args)),200)
+
+@app.route('/charger_get') # for the charger to ask what it needs to know
+def charger_get():
+  charger_get_json = { 'ignition' : os.popen('cat /sys/class/gpio/gpio60/value').read()[0] == "0" } # True if 0
+  if (time.time() - aux_battery['updated'] < 10): # if data is not stale
+    charger_get_json['state'] = aux_battery['state']
+    charger_get_json['targetVoltage'] = 3 * 28 * 4.19
+    charger_get_json['targetCurrent'] = 5
+  else:
+    charger_get_json['state'] = 'unknown'
+  return jsonify(charger_get_json)
+
 @app.route('/aux_battery_get') # for seeing aux battery data to here
 def aux_battery_get():
-  return (str(aux_battery),200)
+  return jsonify(aux_battery)
 
 @app.route('/aux_battery_status') # for seeing aux battery status
 def aux_battery_status():
