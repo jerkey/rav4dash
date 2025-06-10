@@ -42,6 +42,8 @@ def status_fields():
   parts = [x.split(':', 1) for x in status.split() if ':' in x]
   status_fields = {part[0]: part[1] for part in parts}
   cell_13, cell_mean = bms_status()
+  cell_13 = float(aux_battery['min_cell_voltage'])
+  cell_mean = 3.7 # absolute value for cell voltage
   diff = abs(cell_13 - cell_mean)
   badness = min(diff / 7.0, 1.0)
   tint = 255 - int(badness * 255)
@@ -50,8 +52,8 @@ def status_fields():
   else:
     bgcolor = f'ff{tint:02x}ff'
   status_fields['_bgcolor'] = bgcolor
-  status_fields['V13'] = f'{cell_13:.2f}'
-  status_fields['Vmean'] = f'{cell_mean:.2f}'
+  #status_fields['V13'] = f'{cell_13:.2f}'
+  #status_fields['Vmean'] = f'{cell_mean:.2f}'
   if (time.time() - aux_battery['updated'] < 10): # if data is not stale
     for i in ['max_cell_voltage','min_cell_voltage','max_cell_temp','total_voltage','state']:
       status_fields['aux_'+i]=aux_battery[i]
