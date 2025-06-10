@@ -63,10 +63,6 @@ class CanBus():
           status_text = status_text + ", Wrong input voltage at AC plug" if (status & 4) else status_text
           status_text = status_text + ", No battery detected"      if (status & 8) else status_text
           status_text = status_text + ", CAN error?"      if (status & 16) else status_text
-          if status > 0:
-            push_url = 'http://192.168.123.1/charger_push'
-            params = {'voltage' : seenVoltage, 'current' : seenCurrent, 'status' : status_text }
-            push_response = requests.get(push_url, params=params)
     except:
       print("e",end="")
 
@@ -87,6 +83,8 @@ class CanBus():
     charge_desired = {'ignition' : False } # reinitialize
     while True:
       self.receiveMessages()
+      if status > 0 and status < 255:
+        print(status_text)
 
       if time.time() - last1Hz > 1.0: # one time per second
         last1Hz  = time.time()
@@ -95,6 +93,7 @@ class CanBus():
           push_url = 'http://192.168.123.1/charger_push'
           params = {'voltage' : seenVoltage, 'current' : seenCurrent, 'status' : status_text }
           push_response = requests.get(push_url, params=params)
+          print(push_response,end='	')
 
         charge_desired = {'ignition' : False } # reinitialize
         get_url = 'http://192.168.123.1/charger_get'
@@ -104,14 +103,23 @@ class CanBus():
             charge_desired.update(get_data.json())
             print(charge_desired)
           except:
+            targetVoltage = 0
+            targetCurrent = 0
             print('text response: '+get_data.text)
         else:
+          targetVoltage = 0
+          targetCurrent = 0
           print("get_data failed with status code: {}".format(get_data.status_code))
 
       if charge_desired['ignition']:
         try:
-          targetVoltage = charge_desired['targetVoltage']
-          targetCurrent = charge_desired['targetCurrent']
+          if charge_desired['state'] == 'OK2CHARGE':
+            targetVoltage = charge_desired['targetVoltage']
+            targetCurrent = charge_desired['targetCurrent']
+          else:
+            targetVoltage = 0
+            targetCurrent = 0
+
           if (time.time() - lastSeen1806E5F4 < 5):
             print("k",end='')
             self.sendMessages()

@@ -33,8 +33,16 @@ def suspend_aux_battery():  # kill $(pgrep -f statusfilewatch.sh)
 
 @app.route('/ignition_off')
 def ignition_off():
-  gpio60 = open('/sys/class/gpio/gpio60/value', 'w')
-  subprocess.run(['echo', '1'], stdout=gpio60)
+  global aux_battery
+  if aux_battery['state'] == 'OK2CHARGE':
+    aux_battery['state'] = 'STOPPED'
+    time.sleep(11) # let that state sit for a while before shutting off ignition
+    gpio60 = open('/sys/class/gpio/gpio60/value', 'w')
+    subprocess.run(['echo', '1'], stdout=gpio60)
+    aux_battery['state'] = 'unknown'
+  else:
+    gpio60 = open('/sys/class/gpio/gpio60/value', 'w')
+    subprocess.run(['echo', '1'], stdout=gpio60)
   return ('', 204)
 
 def status_fields():
@@ -87,11 +95,13 @@ def bms_status():
       bms_voltages = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
   return (float(bms_voltages[12]), sum([float(v) for i, v in enumerate(bms_voltages) if i != 12]) / 23)
 
-aux_battery = {'updated':0}
+aux_battery = {'updated':0,'state':'unknown'}
 @app.route('/aux_battery_push') # for sending aux battery data to here
 def aux_battery_push():
   global aux_battery
   args = request.args
+  if aux_battery['state'] == 'STOPPED':
+    args.pop('state') # do not overwrite STOPPED
   aux_battery.update(args) # update values in aux_battery with whatever was pushed
   if all(key in args for key in ['max_cell_voltage','min_cell_voltage','max_cell_temp','state']):
     aux_battery['updated'] = time.time()
