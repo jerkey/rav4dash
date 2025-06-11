@@ -3,6 +3,22 @@ P4 #    4" color        diagram color (see page 138)
 1       brown           no wire on P1   signal
 2       blue            violet/red      speedometer
 3       yellow          yellow/blue     thermistor
-4       red             red/blue        +12v from IA5 from F37, also goes to relay P4
+4       red             red/blue R−L    +12v from IA5 from F37, also goes to relay P4
 5       green           brown           thermistor
 6       black           white/black     ground
+
+instead of us turning on the whole circuit at connector B2 pin 16, which is fed
+from IA5 pin 19, we should insert a diode in the Panasone Battery ECU at
+connector B2 pin 16, and feed in 12v through another diode to the board for
+charging.
+
+normally B2:16 is powered by the 10A "Gauge" fuse in F37 at pin 12, on a red/blue wire
+listed in the manual with a unicode emdash as "R−L"
+  (The Unicode character with the decimal value 8722 is the Minus Sign,
+  represented by the hexadecimal value U+2212.  This character is part of the
+  "Mathematical Operators" Unicode block)
+that circuit is powered by IG1 and also goes to a bunch of other random shit,
+including the power brakes.
+
+we should be able to just cut B2:16 and connct it to IG2 where we feed into the
+EV Control ECU and not need to add diodes but we'll see.
