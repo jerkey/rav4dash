@@ -95,13 +95,13 @@ class CanBus():
         last1Hz  = time.time()
 
         if time.time() - lastSeen1806E5F4 < 2.0:
-          push_url = 'http://192.168.123.1/charger_push'
+          push_url = 'http://0/charger_push'
           params = {'voltage' : seenVoltage, 'current' : seenCurrent, 'status' : status_text }
           push_response = requests.get(push_url, params=params)
           print(push_response,end='sV: {}	sC {}	'.format(seenVoltage,seenCurrent))
 
         charge_desired = {'ignition' : False } # reinitialize
-        get_url = 'http://192.168.123.1/charger_get'
+        get_url = 'http://0/charger_get'
         get_data = requests.get(get_url)
         if get_data.status_code == 200:
           try:

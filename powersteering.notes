@@ -1,0 +1,8 @@
+power steering ECU 6-pin plug, goes through a 4" cable to P1 which is a toyota plug
+P4 #    4" color        diagram color (see page 138)
+1       brown           no wire on P1   signal
+2       blue            violet/red      speedometer
+3       yellow          yellow/blue     thermistor
+4       red             red/blue        +12v from IA5 from F37, also goes to relay P4
+5       green           brown           thermistor
+6       black           white/black     ground
