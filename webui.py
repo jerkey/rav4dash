@@ -84,7 +84,10 @@ def last_status():
   if (last_log_age < 5):
     with open(last_log) as f:
       lines = f.readlines()
-      lines[0] = 'toyota_' + lines[0].replace('	','	toyota_')
+      try:
+        lines[0] = 'toyota_' + lines[0].replace('	','	toyota_')
+      except:
+        pass
       statuses = [x for x in lines if x.startswith('toyota_V:')]
       last_status = statuses.pop() if statuses else 'no status'
   else:
