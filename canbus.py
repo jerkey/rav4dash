@@ -14,7 +14,7 @@ status_text = "unknown"
 seenVoltage = 0
 seenCurrent = 0
 lastSeen1806E5F4 = 0
-lastIgnitionFalse = 0
+lastIgnitionFalse = time.time() + 1 # do sendMessages at start of program
 
 #From https://github.com/torvalds/linux/blob/master/include/uapi/linux/can.h
 CAN_EFF_FLAG = 0x80000000 #EFF/SFF is set in the MSB
@@ -69,7 +69,8 @@ class CanBus():
           canID = 0 # no message was waiting, leave the while loop
           print('n',end='')
       except:
-        print("e",end="")
+        canID = 0 # no message was waiting, leave the while loop
+        print('e',end='')
 
   def sendMessages(self):
     rawID = 0x1806E5F4 | CAN_EFF_FLAG # B cansend can1 1806E5F4#0DC8003200000000
@@ -126,7 +127,7 @@ class CanBus():
             targetCurrent = 0
 
           if (time.time() - lastSeen1806E5F4 < 5):
-            print("k",end='')
+            print('k',end='')
             self.sendMessages()
           if (time.time() - lastIgnitionFalse < 4):
             print("sending canbus because ignition turned on")
