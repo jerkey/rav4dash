@@ -52,7 +52,7 @@ class CanBus():
       try:
         raw_bytes = self.canSocket.recv(16)
         if raw_bytes != None: # if a CAN message was waiting
-          print('v',end='')
+          print('v',end='', flush=True)
           rawID,DLC,candata = struct.unpack(canformat,raw_bytes)
           canID = rawID & 0x1FFFFFFF
           if canID == 0x18FF50E5:
@@ -67,10 +67,10 @@ class CanBus():
             status_text = status_text + ", CAN error?"      if (status & 16) else status_text
         else:
           canID = 0 # no message was waiting, leave the while loop
-          print('n',end='')
+          print('n',end='', flush=True)
       except:
         canID = 0 # no message was waiting, leave the while loop
-        print('e',end='')
+        print('e',end='', flush=True)
 
   def sendMessages(self):
     rawID = 0x1806E5F4 | CAN_EFF_FLAG # B cansend can1 1806E5F4#0DC8003200000000
@@ -127,7 +127,7 @@ class CanBus():
             targetCurrent = 0
 
           if (time.time() - lastSeen1806E5F4 < 5):
-            print('k',end='')
+            print('k',end='', flush=True)
             self.sendMessages()
           if (time.time() - lastIgnitionFalse < 4):
             print("sending canbus because ignition turned on")

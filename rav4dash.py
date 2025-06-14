@@ -32,18 +32,18 @@ def parseReply(printout=True):
     a = serialPort.read_all()
     startParseTime = time.time()
     while len(a) == 0 and ((time.time() - startParseTime) < 2): # timeout in seconds
-        #print('.',end='')
+        #print('.',end='', flush=True)
         time.sleep(0.1)
         a = serialPort.read_all()
     if len(a) == 0:
         serialPort.read_all() # clear buffer
-        #print(')',end='')
+        #print(')',end='', flush=True)
         return False
     if a[0] > 0x87 or a[0] < 0x81:
         print("first byte returned was "+hex(a[0])+" expected 0x81-0x87, called from line "+str(inspect.stack()[1][2]))
         return False
     if a[0] & 15 != len(a) - 4:
-        print("strange, expected "+str((a[0] & 15) + 4)+" bytes but got "+str(len(a))+", reading for a while and printing all:",end='')
+        print("strange, expected "+str((a[0] & 15) + 4)+" bytes but got "+str(len(a))+", reading for a while and printing all:",end='', flush=True)
         time.sleep(1)
         a += serialPort.read_all()
         print(a.hex())
@@ -57,9 +57,9 @@ def parseReply(printout=True):
         return False
     if printout:
         if a[2] == ECS:
-            print("ECS says: ",end='')
+            print("ECS says: ",end='', flush=True)
         if a[2] == BCS:
-            print("BCS says: ",end='')
+            print("BCS says: ",end='', flush=True)
         print(a[3:(3 + a[0] & 15)].hex())
     return a
 
@@ -96,9 +96,9 @@ def initBCS():
     parseReply()
 
 def writehex(hexbytes):
-    print('writing ',end='')
+    print('writing ',end='', flush=True)
     for i in bytearray.fromhex(hexbytes):
-        print(hex(i),end=' ')
+        print(hex(i),end=' ', flush=True)
         serialPort.write(i)
         time.sleep(0.01)
 
