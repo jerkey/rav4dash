@@ -134,74 +134,81 @@ def getIPandWifi():
         WIFINETWORK = os.popen('iwconfig 2>&1 | grep -m1 \'^w\'').read().split('"')[1]
     except:
         WIFINETWORK = 'NO_WIFI_NETWORK'
-statusfile = open('rav4dash.status','w') # we overwrite this with the latest
-print('rav4dash.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
-getIPandWifi()
-print('IP: '+IPADDRESS+'	WIFI: '+WIFINETWORK)
-initBCS()
-print('initBCS() success at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
-print('IP address is '+IPADDRESS+' on wifi network '+WIFINETWORK)
+
+def data_query():
+    global totalEnergy
+    failedParseReplies = 0 # count how many failures to parse we've had
+    loopTime = time.time()
+    webUpdateTime = 0 # we'll use this to remember when we last sent a web update
+    chargeStopped = False  # did we brusastop yet?
+    while(failedParseReplies < 2):
+        v = requestSignedInt(BCS,[0x21,1]) # request voltage
+        a = requestSignedInt(BCS,[0x21,3]) # request amperage
+        s = requestSignedInt(BCS,[0x21,4]) # request state of charge (might be 0)
+        t = requestSignedInt(BCS,[0x21,6]) # request battery pack temperature
+        if (s > 900000) and (chargeStopped == False): # in the "after-magne-charge but still plugged in" state, the above requests are answered once per initBCS()
+            #os.system("brusastop")
+            os.system('timeout 5 curl -sG '+CGIURL+' --data-urlencode "charge is complete, stopping charger"' )
+            chargeStopped = True
+            time.sleep(5)
+            #os.system("ignition_off.sh") # turn off vehicle
+        if v and t: # a is 0 in the "after-magne-charge but still plugged in" state
+            failedParseReplies = 0; # reset fail counter
+            volts = v/10.0
+            amps = a/10.0
+            soc = s/10.0
+            tp = t/100.0
+            watts = volts * amps
+            if volts != 499.5 and amps != 400:
+                totalEnergy += watts * ( time.time() - loopTime ) # add energy from each round
+            loopTime = time.time() # update timer
+            printString = "V:"+str(volts)+"	A:"+str(amps)+"	W:"+str(int(watts))+"	Wh:"+str(int(totalEnergy/3600))+"	SOC:"+str(soc)+"	T:"+str(tp)
+            print(printString)
+            statusfile.seek(0)
+            statusfile.write(printString)
+            statusfile.truncate()
+            statusfile.flush()
+            if (time.time() - webUpdateTime) > 60: # time in seconds between web updates
+                getIPandWifi()
+                os.system('timeout 3 curl -sG '+CGIURL+' --data-urlencode "' + printString + '	' + IPADDRESS + '	' + WIFINETWORK + '"' ) # timeout after 3 seconds
+                webUpdateTime = time.time() # reset timer
+            #gv = getModuleVoltages()
+            #print(str(gv)+' '+str(sum(gv)))
+        else:
+            failedParseReplies += 1
+            #print('vRaw:'+str(v)+' aRaw:'+str(a)+' sRaw:'+str(s)+' tRaw:'+str(t))
+            print("timed out querying for volts or amps, failedParseReplies = "+str(failedParseReplies))
+        time.sleep(1)
+
 totalEnergy = 0.0 # watt seconds aka joules
-timeStarted = time.time()
-failedParseReplies = 0 # count how many failures to parse we've had
-webUpdateTime = 0 # we'll use this to remember when we last sent a web update
-loopTime = time.time()
+if __name__ == '__main__':
+    statusfile = open('rav4dash.status','w') # we overwrite this with the latest
+    print('rav4dash.py started at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
+    getIPandWifi()
+    print('IP: '+IPADDRESS+'	WIFI: '+WIFINETWORK)
+    while True:
+        initBCS()
+        print('initBCS() success at ' + time.strftime('%Y-%m-%d %H:%M:%S'))
+        print('IP address is '+IPADDRESS+' on wifi network '+WIFINETWORK)
+        timeStarted = time.time()
+        data_query()
 
-#print('req dtcs:',end='	')
-#sendPacket(BCS,[0x13]) # request DTCs
-#time.sleep(1)
-#print(parseReply())
-#print('clear dtcs:',end='	')
-#sendPacket(BCS,[0x14]) # CLEAR DTCs
-#time.sleep(1)
-#print(parseReply())
-#print('req dtcs:',end='	')
-#sendPacket(BCS,[0x13]) # request DTCs
-#time.sleep(1)
-#print(parseReply())
-#sendPacket(BCS,[0x14]) # CLEAR  DTCs
-#print(parseReply())
-#sendPacket(BCS,[0x13]) # request DTCs
-#print(parseReply())
-chargeStopped = False  # did we brusastop yet?
-while(failedParseReplies < 2):
-    v = requestSignedInt(BCS,[0x21,1]) # request voltage
-    a = requestSignedInt(BCS,[0x21,3]) # request amperage
-    s = requestSignedInt(BCS,[0x21,4]) # request state of charge
-    t = requestSignedInt(BCS,[0x21,6]) # request battery pack temperature
-    if (s > 900000) and (chargeStopped == False): # in the "after-magne-charge but still plugged in" state, the above requests are answered once per initBCS()
-        #os.system("brusastop")
-        os.system('timeout 5 curl -sG '+CGIURL+' --data-urlencode "charge is complete, stopping charger"' )
-        chargeStopped = True
-        time.sleep(5)
-        #os.system("ignition_off.sh") # turn off vehicle
-    if v and s and t: # a is 0 in the "after-magne-charge but still plugged in" state
-        failedParseReplies = 0; # reset fail counter
-        volts = v/10.0
-        amps = a/10.0
-        soc = s/10.0
-        tp = t/100.0
-        watts = volts * amps
-        if volts != 499.5 and amps != 400:
-            totalEnergy += watts * ( time.time() - loopTime ) # add energy from each round
-        loopTime = time.time() # update timer
-        printString = "V:"+str(volts)+"	A:"+str(amps)+"	W:"+str(int(watts))+"	Wh:"+str(int(totalEnergy/3600))+"	SOC:"+str(soc)+"	T:"+str(tp)
-        print(printString)
-        statusfile.seek(0)
-        statusfile.write(printString)
-        statusfile.truncate()
-        statusfile.flush()
-        if (time.time() - webUpdateTime) > 60: # time in seconds between web updates
-            getIPandWifi()
-            os.system('timeout 3 curl -sG '+CGIURL+' --data-urlencode "' + printString + '	' + IPADDRESS + '	' + WIFINETWORK + '"' ) # timeout after 3 seconds
-            webUpdateTime = time.time() # reset timer
-        #gv = getModuleVoltages()
-        #print(str(gv)+' '+str(sum(gv)))
-    else:
-        failedParseReplies += 1
-        #print('vRaw:'+str(v)) '	aRaw:'+str(a) '	sRaw:'+str(s) '	tRaw:'+str(t))
-        print("timed out querying for volts or amps, failedParseReplies = "+str(failedParseReplies))
-    time.sleep(1)
+    #print('req dtcs:',end='	')
+    #sendPacket(BCS,[0x13]) # request DTCs
+    #time.sleep(1)
+    #print(parseReply())
+    #print('clear dtcs:',end='	')
+    #sendPacket(BCS,[0x14]) # CLEAR DTCs
+    #time.sleep(1)
+    #print(parseReply())
+    #print('req dtcs:',end='	')
+    #sendPacket(BCS,[0x13]) # request DTCs
+    #time.sleep(1)
+    #print(parseReply())
+    #sendPacket(BCS,[0x14]) # CLEAR  DTCs
+    #print(parseReply())
+    #sendPacket(BCS,[0x13]) # request DTCs
+    #print(parseReply())
 
-#serialPort.setRTS(False) # True is +5.15v, False is -5.15v
-exit() # RTS will go to False upon exit
+    #serialPort.setRTS(False) # True is +5.15v, False is -5.15v
+    #exit() # RTS will go to False upon exit
