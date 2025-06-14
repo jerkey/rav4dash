@@ -110,7 +110,10 @@ def aux_battery_push():
   global aux_battery
   args = request.args
   if aux_battery['state'] == 'STOPPED':
-    args.pop('state') # do not overwrite STOPPED
+    try:
+      args.pop('state') # do not overwrite STOPPED
+    except:
+      pass
   aux_battery.update(args) # update values in aux_battery with whatever was pushed
   if all(key in args for key in ['max_cell_voltage','min_cell_voltage','max_cell_temp','state']):
     aux_battery['updated'] = time.time()
